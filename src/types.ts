@@ -16,12 +16,12 @@ export interface DirectionResult {
   dirDeg: number
   /** この方向で画面内に表示できた最大離心度（視角、度） */
   maxDeg: number
-  /** 「見えやすくなった」と応答した離心度（視角、度）。画面端まで応答がなければ null */
+  /** 「はっきり見えた」と応答した離心度（視角、度）。画面端まで応答がなければ null */
   boundaryDeg: number | null
 }
 
-/** 検査に使う 8 方向 */
-export const DIRECTIONS = [0, 45, 90, 135, 180, 225, 270, 315]
+/** 検査に使う 16 方向（22.5° 刻み） */
+export const DIRECTIONS = Array.from({ length: 16 }, (_, i) => i * 22.5)
 
 /** 視角 1 度あたりのピクセル数を計算する */
 export function pxPerDeg(s: Settings): number {
@@ -34,7 +34,7 @@ export const EYE_LABEL: Record<Eye, string> = {
   both: '両眼',
 }
 
-export const DIR_LABEL: Record<number, string> = {
+const MAIN_DIR_LABEL: Record<number, string> = {
   0: '右',
   45: '右上',
   90: '上',
@@ -43,4 +43,9 @@ export const DIR_LABEL: Record<number, string> = {
   225: '左下',
   270: '下',
   315: '右下',
+}
+
+/** 方向のラベル。主要8方向は名前、それ以外は角度で表す */
+export function dirLabel(dirDeg: number): string {
+  return MAIN_DIR_LABEL[dirDeg] ?? `${dirDeg}°`
 }
