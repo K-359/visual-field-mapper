@@ -1,0 +1,206 @@
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: #0d0d12;
+  color: #e8e8ee;
+  font-family: 'Hiragino Sans', 'Yu Gothic', system-ui, sans-serif;
+  line-height: 1.7;
+}
+
+h1 {
+  font-size: 1.6rem;
+}
+
+h2 {
+  font-size: 1.1rem;
+  border-left: 4px solid #5b8def;
+  padding-left: 0.6em;
+}
+
+button {
+  font-size: 1rem;
+  padding: 0.5em 1.4em;
+  border-radius: 8px;
+  border: 1px solid #555;
+  background: #26262f;
+  color: #e8e8ee;
+  cursor: pointer;
+}
+
+button:hover {
+  background: #33333f;
+}
+
+button.primary {
+  background: #3b6fd4;
+  border-color: #3b6fd4;
+  font-weight: bold;
+}
+
+button.primary:hover {
+  background: #4d80e4;
+}
+
+/* ---- 設定画面 ---- */
+
+.setup {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem 4rem;
+}
+
+.lead {
+  color: #b8b8c8;
+}
+
+.warn {
+  background: #3a2a1a;
+  border: 1px solid #7a5a2a;
+  border-radius: 8px;
+  padding: 0.7em 1em;
+  font-size: 0.92rem;
+}
+
+.card-gauge {
+  border: 2px dashed #5b8def;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #8aa8e8;
+  font-size: 0.9rem;
+  margin-bottom: 0.8rem;
+  user-select: none;
+}
+
+.setup input[type='range'] {
+  width: 100%;
+  max-width: 600px;
+}
+
+.setup input[type='number'] {
+  width: 5em;
+  font-size: 1rem;
+  padding: 0.3em;
+  background: #1c1c24;
+  color: #e8e8ee;
+  border: 1px solid #555;
+  border-radius: 6px;
+}
+
+.eye-select {
+  display: flex;
+  gap: 1.5rem;
+}
+
+.eye-select label {
+  cursor: pointer;
+}
+
+/* ---- 測定画面 ---- */
+
+.test-screen {
+  position: fixed;
+  inset: 0;
+  background: #000;
+  cursor: none;
+  overflow: hidden;
+}
+
+.fix-line {
+  position: absolute;
+  background: #d94f4f;
+}
+
+.fix-line.horizontal {
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 3px;
+  transform: translateY(-50%);
+}
+
+.fix-line.vertical {
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 3px;
+  transform: translateX(-50%);
+}
+
+.stimulus {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+  transition: opacity 0.6s;
+}
+
+.stimulus.done {
+  opacity: 0;
+}
+
+.test-hud {
+  position: absolute;
+  bottom: 10px;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: space-between;
+  padding: 0 16px;
+  color: #555;
+  font-size: 0.85rem;
+  user-select: none;
+}
+
+/* ---- 結果画面 ---- */
+
+.result {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem 4rem;
+}
+
+.field-map {
+  width: 100%;
+  max-width: 480px;
+  display: block;
+  margin: 1rem auto;
+}
+
+.summary-line {
+  font-size: 1.1rem;
+  text-align: center;
+}
+
+.result table {
+  border-collapse: collapse;
+  margin: 1.2rem auto;
+}
+
+.result th,
+.result td {
+  border: 1px solid #3a3a4a;
+  padding: 0.35em 1em;
+  text-align: left;
+}
+
+.result th {
+  background: #1c1c26;
+}
+
+.button-row {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  margin-top: 1.5rem;
+}
