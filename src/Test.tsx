@@ -11,17 +11,12 @@ interface Props {
 interface Sweep {
   dirDeg: number
   maxDeg: number
-  /** ランドルト環の切れ目の向き（度、0=右、90=上） */
-  gapDeg: number
 }
 
-/** 切れ目の向きの候補。ランダムにすることで「向きが分かった＝解像できた」と判定できる */
-const GAP_DIRECTIONS = [0, 90, 180, 270]
-
-const SPEED_DEG_S = 2.5 // ランドルト環の移動速度（視角 度/秒）
-const RING_SIZE_DEG = 1.5 // ランドルト環の外径（視角、度）
-const START_DEG = 2 // ランドルト環の初期位置（中心からの視角、度）
-const PAUSE_MS = 1200 // 次の文字が動き出すまでの待ち時間
+const SPEED_DEG_S = 2.5 // 点の移動速度（視角 度/秒）
+const DOT_SIZE_DEG = 0.4 // 点の直径（視角、度）
+const START_DEG = 2 // 点の初期位置（中心からの視角、度）
+const PAUSE_MS = 1000 // 次の点が動き出すまでの待ち時間
 const MARGIN_PX = 24 // 画面端の余白
 const MAX_DEG_CAP = 30 // 測定する離心度の上限
 
@@ -57,44 +52,13 @@ function planSweeps(ppd: number, w: number, h: number): Sweep[] {
             : Infinity
       const maxPx = Math.min(tx, ty)
       const maxDeg = Math.min(maxPx / ppd, MAX_DEG_CAP)
-      return {
-        dirDeg,
-        maxDeg: Math.round(maxDeg * 10) / 10,
-        gapDeg:
-          GAP_DIRECTIONS[Math.floor(Math.random() * GAP_DIRECTIONS.length)],
-      }
+      return { dirDeg, maxDeg: Math.round(maxDeg * 10) / 10 }
     }),
   )
 }
 
-/**
- * ランドルト環。標準規格に従い、輪の太さと切れ目の幅は外径の 1/5。
- * gapDeg は切れ目の向き（0=右、90=上、反時計回り）
- */
-function LandoltC({ sizePx, gapDeg }: { sizePx: number; gapDeg: number }) {
-  const stroke = sizePx / 5
-  const r = (sizePx - stroke) / 2
-  const circumference = 2 * Math.PI * r
-  const gapLen = stroke
-  return (
-    <svg width={sizePx} height={sizePx} viewBox={`0 0 ${sizePx} ${sizePx}`}>
-      <circle
-        cx={sizePx / 2}
-        cy={sizePx / 2}
-        r={r}
-        fill="none"
-        stroke="#fff"
-        strokeWidth={stroke}
-        strokeDasharray={`${circumference - gapLen} ${gapLen}`}
-        strokeDashoffset={circumference - gapLen / 2}
-        transform={`rotate(${-gapDeg} ${sizePx / 2} ${sizePx / 2})`}
-      />
-    </svg>
-  )
-}
-
-/** 測定が終わった文字の表示情報（最後の位置でフェードアウトさせる） */
-interface FinishedChar {
+/** 測定が終わった点の表示情報（応答した位置にとどめて表示し続ける） */
+interface FinishedDot {
   dirDeg: number
   eccDeg: number
 }
@@ -106,7 +70,7 @@ export default function Test({ settings, onFinish, onCancel }: Props) {
   )
   const [index, setIndex] = useState(0)
   const [eccDeg, setEccDeg] = useState(START_DEG)
-  const [finished, setFinished] = useState<FinishedChar[]>([])
+  const [finished, setFinished] = useState<FinishedDot[]>([])
 
   const eccRef = useRef(START_DEG)
   const movingRef = useRef(false)
@@ -212,18 +176,19 @@ export default function Test({ settings, onFinish, onCancel }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  const ringPx = Math.max(20, RING_SIZE_DEG * ppd)
+  const dotPx = Math.max(8, DOT_SIZE_DEG * ppd)
   const cx = window.innerWidth / 2
   const cy = window.innerHeight / 2
 
   return (
     <div className="test-screen">
-      {/* 固視ガイド: 画面全体を横切る赤線。交点(中央)を見続けてもらう */}
-      <div className="fix-line horizontal" />
-      <div className="fix-line vertical" />
+      {/* 固視ガイド: 中心の小さな赤い十字。ここを見続けてもらう */}
+      <div className="fix-cross horizontal" />
+      <div className="fix-cross vertical" />
 
-      {/* 8方向すべてのランドルト環を最初から表示しておき、1つずつ順番に外へ動かす。
-          突然現れる刺激は視線を引きつけてしまうため */}
+      {/* 16方向すべての点を最初から表示しておき、1つずつ順番に外へ動かす。
+          突然現れる刺激は視線を引きつけてしまうため。
+          応答済みの点は、応答した位置にとどまり続ける */}
       {sweeps.map((s, i) => {
         const done = finished.find((f) => f.dirDeg === s.dirDeg)
         const ecc = done
@@ -237,16 +202,14 @@ export default function Test({ settings, onFinish, onCancel }: Props) {
         return (
           <div
             key={s.dirDeg}
-            className={done ? 'stimulus done' : 'stimulus'}
+            className="dot"
             style={{
-              left: x - ringPx / 2,
-              top: y - ringPx / 2,
-              width: ringPx,
-              height: ringPx,
+              left: x - dotPx / 2,
+              top: y - dotPx / 2,
+              width: dotPx,
+              height: dotPx,
             }}
-          >
-            <LandoltC sizePx={ringPx} gapDeg={s.gapDeg} />
-          </div>
+          />
         )
       })}
 
@@ -255,7 +218,7 @@ export default function Test({ settings, onFinish, onCancel }: Props) {
           {index + 1} / {sweeps.length} 方向
         </span>
         <span>
-          動いている輪の切れ目の向きが分かったら スペース または タップ ／ Esc で中止
+          動いている点がはっきり見えたら スペース または タップ ／ Esc で中止
         </span>
       </div>
     </div>

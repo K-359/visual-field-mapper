@@ -1,5 +1,5 @@
 import type { DirectionResult, Settings } from './types'
-import { DIR_LABEL, EYE_LABEL } from './types'
+import { dirLabel, EYE_LABEL } from './types'
 
 interface Props {
   settings: Settings
@@ -61,8 +61,8 @@ export default function Result({ settings, results, onRetry, onReset }: Props) {
       <h1>測定結果（{EYE_LABEL[settings.eye]}）</h1>
 
       <p className="lead">
-        グレーの領域が「輪の切れ目を見分けられなかった範囲」です。緑の点は
-        切れ目の向きが分かるようになった場所、点線円の目盛りは中心からの
+        グレーの領域が「点がはっきり見えなかった範囲」です。赤い点は
+        はっきり見えるようになった場所、点線円の目盛りは中心からの
         視角（度）です。
       </p>
 
@@ -72,7 +72,13 @@ export default function Result({ settings, results, onRetry, onReset }: Props) {
         role="img"
         aria-label="視野マップ"
       >
-        <rect width={SIZE} height={SIZE} fill="#15151d" rx={12} />
+        <rect
+          width={SIZE}
+          height={SIZE}
+          fill="#fafafa"
+          stroke="#ddd"
+          rx={12}
+        />
 
         {/* 目盛り円 */}
         {gridSteps.map((deg) => (
@@ -82,13 +88,13 @@ export default function Result({ settings, results, onRetry, onReset }: Props) {
               cy={CENTER}
               r={deg * scale}
               fill="none"
-              stroke="#3a3a4a"
+              stroke="#ccc"
               strokeDasharray="4 4"
             />
             <text
               x={CENTER + deg * scale + 3}
               y={CENTER - 4}
-              fill="#8888a0"
+              fill="#888"
               fontSize={11}
             >
               {deg}°
@@ -97,16 +103,16 @@ export default function Result({ settings, results, onRetry, onReset }: Props) {
         ))}
 
         {/* 方向ラベル */}
-        <text x={CENTER} y={16} fill="#aaaabc" fontSize={13} textAnchor="middle">
+        <text x={CENTER} y={16} fill="#777" fontSize={13} textAnchor="middle">
           上
         </text>
-        <text x={CENTER} y={SIZE - 6} fill="#aaaabc" fontSize={13} textAnchor="middle">
+        <text x={CENTER} y={SIZE - 6} fill="#777" fontSize={13} textAnchor="middle">
           下
         </text>
-        <text x={10} y={CENTER + 4} fill="#aaaabc" fontSize={13}>
+        <text x={10} y={CENTER + 4} fill="#777" fontSize={13}>
           左
         </text>
-        <text x={SIZE - 22} y={CENTER + 4} fill="#aaaabc" fontSize={13}>
+        <text x={SIZE - 22} y={CENTER + 4} fill="#777" fontSize={13}>
           右
         </text>
 
@@ -114,13 +120,13 @@ export default function Result({ settings, results, onRetry, onReset }: Props) {
         {boundaryPts.length >= 3 && (
           <path
             d={smoothClosedPath(boundaryPts)}
-            fill="rgba(148, 148, 170, 0.28)"
-            stroke="#9494aa"
+            fill="rgba(120, 120, 130, 0.2)"
+            stroke="#999"
             strokeWidth={1.5}
           />
         )}
 
-        {/* 光点が動いた経路と応答位置 */}
+        {/* 点が動いた経路と応答位置 */}
         {ordered.map((r) => {
           const end = polar(r.dirDeg, effectiveDeg(r))
           const pathEnd = polar(r.dirDeg, r.boundaryDeg ?? r.maxDeg)
@@ -131,13 +137,13 @@ export default function Result({ settings, results, onRetry, onReset }: Props) {
                 y1={CENTER}
                 x2={pathEnd.x}
                 y2={pathEnd.y}
-                stroke="#33333f"
+                stroke="#e5e5e5"
                 strokeWidth={1}
               />
               {r.boundaryDeg !== null ? (
-                <circle cx={end.x} cy={end.y} r={6} fill="#4ade80" />
+                <circle cx={end.x} cy={end.y} r={6} fill="#d92020" />
               ) : (
-                <g stroke="#f87171" strokeWidth={2}>
+                <g stroke="#aaa" strokeWidth={2}>
                   <line
                     x1={pathEnd.x - 5}
                     y1={pathEnd.y - 5}
@@ -162,7 +168,7 @@ export default function Result({ settings, results, onRetry, onReset }: Props) {
           y1={CENTER}
           x2={CENTER + 6}
           y2={CENTER}
-          stroke="#e05555"
+          stroke="#d92020"
           strokeWidth={2}
         />
         <line
@@ -170,7 +176,7 @@ export default function Result({ settings, results, onRetry, onReset }: Props) {
           y1={CENTER - 6}
           x2={CENTER}
           y2={CENTER + 6}
-          stroke="#e05555"
+          stroke="#d92020"
           strokeWidth={2}
         />
       </svg>
@@ -178,7 +184,7 @@ export default function Result({ settings, results, onRetry, onReset }: Props) {
       {avg !== null && (
         <p className="summary-line">
           平均すると、中心からおよそ <strong>{avg.toFixed(1)}°</strong>{' '}
-          のあたりから切れ目が見分けられるようになっています。
+          のあたりから点がはっきり見えるようになっています。
         </p>
       )}
 
@@ -186,13 +192,13 @@ export default function Result({ settings, results, onRetry, onReset }: Props) {
         <thead>
           <tr>
             <th>方向</th>
-            <th>切れ目が分かるようになった距離（視角）</th>
+            <th>はっきり見えるようになった距離（視角）</th>
           </tr>
         </thead>
         <tbody>
           {ordered.map((r) => (
             <tr key={r.dirDeg}>
-              <td>{DIR_LABEL[r.dirDeg]}</td>
+              <td>{dirLabel(r.dirDeg)}</td>
               <td>
                 {r.boundaryDeg !== null
                   ? `約 ${r.boundaryDeg.toFixed(1)}°`
