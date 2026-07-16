@@ -54,12 +54,41 @@ function planCircles(ppd: number, w: number, h: number): CircleMeasurement[] {
 
 export default function Test({ settings, onFinish, onCancel }: Props) {
   const ppd = pxPerDeg(settings)
+  const [viewport, setViewport] = useState({
+    w: window.innerWidth,
+    h: window.innerHeight,
+  })
   const [circles, setCircles] = useState(() =>
     planCircles(ppd, window.innerWidth, window.innerHeight),
   )
   const [activeIndex, setActiveIndex] = useState(0)
 
   const activeCircle = circles[activeIndex]
+
+  useEffect(() => {
+    const onResize = () => {
+      const w = window.innerWidth
+      const h = window.innerHeight
+      setViewport({ w, h })
+      const plan = planCircles(ppd, w, h)
+      setCircles((current) =>
+        current.map((circle, index) => ({
+          ...circle,
+          maxDeg: plan[index].maxDeg,
+          eccDeg: Math.min(circle.eccDeg, plan[index].maxDeg),
+        })),
+      )
+    }
+    // window の resize イベントが発火しない環境（ビューポートエミュレーション等）
+    // もあるため、ルート要素のサイズ変化を ResizeObserver で監視する
+    const observer = new ResizeObserver(onResize)
+    observer.observe(document.documentElement)
+    window.addEventListener('resize', onResize)
+    return () => {
+      observer.disconnect()
+      window.removeEventListener('resize', onResize)
+    }
+  }, [ppd])
 
   useEffect(() => {
     const moveActiveCircle = (deltaDeg: number) => {
@@ -121,8 +150,8 @@ export default function Test({ settings, onFinish, onCancel }: Props) {
     return () => window.removeEventListener('keydown', onKey)
   }, [activeIndex, circles, onCancel, onFinish])
 
-  const cx = window.innerWidth / 2
-  const cy = window.innerHeight / 2
+  const cx = viewport.w / 2
+  const cy = viewport.h / 2
   const targetPx = Math.max(50, TARGET_SIZE_DEG * ppd)
 
   const rad = (activeCircle.dirDeg * Math.PI) / 180
