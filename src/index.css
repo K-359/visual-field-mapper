@@ -8,52 +8,65 @@ body {
   padding: 0;
 }
 
+/* ロービジョン(LHON など)向けに基本サイズを大きくする。
+   全体を rem 基準で組んでいるため、ここを変えると一括で拡大縮小できる */
+html {
+  font-size: 22px;
+}
+
 body {
   background: #fff;
-  color: #222;
+  color: #111;
   font-family: 'Hiragino Sans', 'Yu Gothic', system-ui, sans-serif;
-  line-height: 1.7;
+  line-height: 1.8;
 }
 
 h1 {
-  font-size: 1.6rem;
+  font-size: 2rem;
 }
 
 h2 {
-  font-size: 1.1rem;
-  border-left: 4px solid #3b6fd4;
+  font-size: 1.3rem;
+  border-left: 6px solid #1a4fc4;
   padding-left: 0.6em;
 }
 
 button {
-  font-size: 1rem;
+  font-size: 1.1rem;
+  font-weight: bold;
+  min-height: 2.4em;
   padding: 0.5em 1.4em;
-  border-radius: 8px;
-  border: 1px solid #bbb;
+  border-radius: 10px;
+  border: 2px solid #767676;
   background: #f4f4f4;
-  color: #222;
+  color: #111;
   cursor: pointer;
 }
 
 button:hover {
-  background: #e8e8e8;
+  background: #e4e4e4;
+}
+
+/* キーボード操作でも今どこにいるか分かるように太い枠を出す */
+:focus-visible {
+  outline: 4px solid #1a4fc4;
+  outline-offset: 3px;
 }
 
 button.primary {
-  background: #3b6fd4;
-  border-color: #3b6fd4;
+  background: #1a4fc4;
+  border-color: #1a4fc4;
   color: #fff;
-  font-weight: bold;
 }
 
 button.primary:hover {
-  background: #4d80e4;
+  background: #2f62d6;
 }
 
 /* ---- 設定画面 ---- */
 
 .setup {
-  max-width: 720px;
+  max-width: 780px;
   margin: 0 auto;
   padding: 2rem 1.5rem 4rem;
   min-height: 100vh;
@@ -65,31 +78,54 @@ button.primary:hover {
 }
 
 .lead {
-  color: #555;
+  color: #333;
+  font-size: 1.1rem;
 }
 
 .warn {
   background: #fff6e5;
-  border: 1px solid #e0b96a;
-  border-radius: 8px;
-  padding: 0.7em 1em;
-  font-size: 0.92rem;
+  border: 2px solid #b8860b;
+  border-radius: 10px;
+  padding: 0.8em 1em;
+  font-size: 1rem;
+  color: #333;
 }
 
 .note {
-  color: #888;
-  font-size: 0.85rem;
+  color: #444;
+  font-size: 1rem;
   margin-top: 2.5rem;
 }
 
 .eye-select {
   display: flex;
-  gap: 1.5rem;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 1rem;
   margin: 1.2rem 0;
 }
 
 .eye-select label {
   cursor: pointer;
+  font-size: 1.2rem;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  gap: 0.4em;
+  border: 2px solid #767676;
+  border-radius: 10px;
+  padding: 0.5em 1em;
+}
+
+.eye-select label:has(input:checked) {
+  border-color: #1a4fc4;
+  background: #e9f0ff;
+}
+
+.eye-select input[type='radio'] {
+  width: 1.2em;
+  height: 1.2em;
+  accent-color: #1a4fc4;
 }
 
 /* ---- 測定画面 ---- */
@@ -154,7 +190,7 @@ button.primary:hover {
 
 .test-hud {
   position: absolute;
-  bottom: 10px;
+  bottom: 12px;
   left: 0;
   right: 0;
   display: flex;
@@ -163,16 +199,16 @@ button.primary:hover {
   flex-wrap: wrap;
   gap: 16px;
   padding: 0 16px;
-  color: #666;
-  font-size: 0.85rem;
+  color: #333;
+  font-size: 1rem;
   user-select: none;
   touch-action: auto;
   z-index: 1;
 }
 
 .test-hud button {
-  padding: 0.35em 0.8em;
-  font-size: 0.85rem;
+  padding: 0.35em 0.9em;
+  font-size: 1rem;
 }
 
 .test-hud button:disabled {
@@ -181,8 +217,8 @@ button.primary:hover {
 }
 
 button.danger {
-  color: #b32020;
-  border-color: #d9a0a0;
+  color: #a01818;
+  border-color: #a01818;
   background: #fff;
 }
 
@@ -193,13 +229,13 @@ button.danger:hover {
 /* ---- 履歴画面 ---- */
 
 .history {
-  max-width: 720px;
+  max-width: 780px;
   margin: 0 auto;
   padding: 2rem 1.5rem 4rem;
 }
 
 .history-empty {
-  color: #888;
+  color: #444;
   text-align: center;
   margin: 3rem 0;
 }
@@ -210,7 +246,7 @@ button.danger:hover {
   margin: 1.2rem 0;
   display: flex;
   flex-direction: column;
-  gap: 0.6rem;
+  gap: 0.8rem;
 }
 
 .history-item {
@@ -218,9 +254,9 @@ button.danger:hover {
   align-items: center;
   gap: 0.8rem;
   flex-wrap: wrap;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  padding: 0.6em 1em;
+  border: 2px solid #999;
+  border-radius: 10px;
+  padding: 0.7em 1em;
 }
 
 .history-item .meta {
@@ -233,38 +269,38 @@ button.danger:hover {
 }
 
 .history-item .detail {
-  color: #666;
-  font-size: 0.9rem;
+  color: #333;
+  font-size: 1rem;
 }
 
 .history-item button {
-  font-size: 0.9rem;
-  padding: 0.35em 1em;
+  font-size: 1rem;
+  padding: 0.4em 1em;
 }
 
 /* ---- 結果画面 ---- */
 
 .result {
-  max-width: 720px;
+  max-width: 780px;
   margin: 0 auto;
   padding: 2rem 1.5rem 4rem;
 }
 
 .field-map {
   width: 100%;
-  max-width: 480px;
+  max-width: 560px;
   display: block;
   margin: 1rem auto;
 }
 
 .saved-at {
-  color: #888;
-  font-size: 0.9rem;
+  color: #444;
+  font-size: 1rem;
   margin-top: -0.5rem;
 }
 
 .summary-line {
-  font-size: 1.1rem;
+  font-size: 1.3rem;
   text-align: center;
 }
 
@@ -275,17 +311,18 @@ button.danger:hover {
 
 .result th,
 .result td {
-  border: 1px solid #ccc;
-  padding: 0.35em 1em;
+  border: 1px solid #999;
+  padding: 0.45em 1em;
   text-align: left;
 }
 
 .result th {
-  background: #f4f4f4;
+  background: #f0f0f0;
 }
 
 .button-row {
   display: flex;
+  flex-wrap: wrap;
   gap: 1rem;
   justify-content: center;
   margin-top: 1.5rem;

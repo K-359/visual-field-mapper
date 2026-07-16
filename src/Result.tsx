@@ -104,28 +104,31 @@ export default function Result({
               stroke="#ccc"
               strokeDasharray="4 4"
             />
-            <text
-              x={CENTER + deg * scale + 3}
-              y={CENTER - 4}
-              fill="#888"
-              fontSize={11}
-            >
-              {deg}°
-            </text>
+            {/* 右端の「右」ラベルと重なる位置の目盛りは表示しない */}
+            {CENTER + deg * scale + 3 < SIZE - 70 && (
+              <text
+                x={CENTER + deg * scale + 3}
+                y={CENTER - 4}
+                fill="#555"
+                fontSize={16}
+              >
+                {deg}°
+              </text>
+            )}
           </g>
         ))}
 
         {/* 方向ラベル */}
-        <text x={CENTER} y={16} fill="#777" fontSize={13} textAnchor="middle">
+        <text x={CENTER} y={26} fill="#333" fontSize={22} fontWeight="bold" textAnchor="middle">
           上
         </text>
-        <text x={CENTER} y={SIZE - 6} fill="#777" fontSize={13} textAnchor="middle">
+        <text x={CENTER} y={SIZE - 8} fill="#333" fontSize={22} fontWeight="bold" textAnchor="middle">
           下
         </text>
-        <text x={10} y={CENTER + 4} fill="#777" fontSize={13}>
+        <text x={8} y={CENTER + 8} fill="#333" fontSize={22} fontWeight="bold">
           左
         </text>
-        <text x={SIZE - 22} y={CENTER + 4} fill="#777" fontSize={13}>
+        <text x={SIZE - 30} y={CENTER + 8} fill="#333" fontSize={22} fontWeight="bold">
           右
         </text>
 
