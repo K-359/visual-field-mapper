@@ -125,12 +125,10 @@ export default function Test({ settings, onFinish, onCancel }: Props) {
   const cy = window.innerHeight / 2
   const targetPx = Math.max(50, TARGET_SIZE_DEG * ppd)
 
-  const position = (dirDeg: number, distanceDeg: number) => {
-    const rad = (dirDeg * Math.PI) / 180
-    return {
-      x: cx + Math.cos(rad) * distanceDeg * ppd,
-      y: cy - Math.sin(rad) * distanceDeg * ppd,
-    }
+  const rad = (activeCircle.dirDeg * Math.PI) / 180
+  const activePos = {
+    x: cx + Math.cos(rad) * activeCircle.eccDeg * ppd,
+    y: cy - Math.sin(rad) * activeCircle.eccDeg * ppd,
   }
 
   return (
@@ -138,26 +136,21 @@ export default function Test({ settings, onFinish, onCancel }: Props) {
       <div className="fix-cross horizontal" />
       <div className="fix-cross vertical" />
 
-      {circles.map((circle, index) => {
-        const p = position(circle.dirDeg, circle.eccDeg)
-        return (
-          <div
-            key={circle.dirDeg}
-            className={`circle-target${index === activeIndex ? ' active' : ''}`}
-            style={{ left: p.x, top: p.y }}
-            aria-label={`${dirLabel(circle.dirDeg)}の円`}
-          >
-            <svg
-              className="visibility-target"
-              style={{ width: targetPx, height: targetPx }}
-              viewBox="-28 -28 56 56"
-              aria-hidden="true"
-            >
-              <circle r="12" strokeWidth="6" />
-            </svg>
-          </div>
-        )
-      })}
+      <div
+        key={activeCircle.dirDeg}
+        className="circle-target"
+        style={{ left: activePos.x, top: activePos.y }}
+        aria-label={`${dirLabel(activeCircle.dirDeg)}の円`}
+      >
+        <svg
+          className="visibility-target"
+          style={{ width: targetPx, height: targetPx }}
+          viewBox="-28 -28 56 56"
+          aria-hidden="true"
+        >
+          <circle r="12" strokeWidth="6" />
+        </svg>
+      </div>
 
       <div className="test-hud">
         <span>

@@ -141,10 +141,6 @@ button.primary:hover {
   z-index: 2;
 }
 
-.circle-target.active {
-  z-index: 3;
-}
-
 .visibility-target {
   position: absolute;
   overflow: visible;
