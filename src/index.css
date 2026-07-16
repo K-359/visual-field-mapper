@@ -112,11 +112,11 @@ button.primary:hover {
   position: fixed;
   inset: 0;
   background: #fff;
-  cursor: none;
   overflow: hidden;
+  touch-action: none;
 }
 
-/* 中心の小さな赤い十字（固視点） */
+/* 中心の大きな赤い十字（固視点） */
 .fix-cross {
   position: absolute;
   left: 50%;
@@ -125,14 +125,14 @@ button.primary:hover {
 }
 
 .fix-cross.horizontal {
-  width: 28px;
-  height: 3px;
+  width: 56px;
+  height: 6px;
   transform: translate(-50%, -50%);
 }
 
 .fix-cross.vertical {
-  width: 3px;
-  height: 28px;
+  width: 6px;
+  height: 56px;
   transform: translate(-50%, -50%);
 }
 
@@ -142,6 +142,32 @@ button.primary:hover {
   border-radius: 50%;
   background: #d92020;
   user-select: none;
+  pointer-events: none;
+}
+
+.circle-target {
+  position: absolute;
+  width: 30px;
+  height: 30px;
+  transform: translate(-50%, -50%);
+  display: grid;
+  place-items: center;
+  z-index: 2;
+}
+
+.circle-target.active {
+  z-index: 3;
+}
+
+.visibility-target {
+  position: absolute;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.visibility-target circle {
+  fill: none;
+  stroke: #d92020;
 }
 
 .test-hud {
@@ -150,11 +176,26 @@ button.primary:hover {
   left: 0;
   right: 0;
   display: flex;
-  justify-content: space-between;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 16px;
   padding: 0 16px;
-  color: #999;
+  color: #666;
   font-size: 0.85rem;
   user-select: none;
+  touch-action: auto;
+  z-index: 1;
+}
+
+.test-hud button {
+  padding: 0.35em 0.8em;
+  font-size: 0.85rem;
+}
+
+.test-hud button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
 }
 
 /* ---- 結果画面 ---- */

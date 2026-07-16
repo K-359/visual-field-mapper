@@ -16,7 +16,7 @@ export interface DirectionResult {
   dirDeg: number
   /** この方向で画面内に表示できた最大離心度（視角、度） */
   maxDeg: number
-  /** 「はっきり見えた」と応答した離心度（視角、度）。画面端まで応答がなければ null */
+  /** キー操作で円がくっきり見えた境界の離心度（視角、度） */
   boundaryDeg: number | null
 }
 

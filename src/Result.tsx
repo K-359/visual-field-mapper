@@ -61,8 +61,8 @@ export default function Result({ settings, results, onRetry, onReset }: Props) {
       <h1>測定結果（{EYE_LABEL[settings.eye]}）</h1>
 
       <p className="lead">
-        グレーの領域が「点がはっきり見えなかった範囲」です。赤い点は
-        はっきり見えるようになった場所、点線円の目盛りは中心からの
+        グレーの領域が「円がくっきり見えなかった範囲」です。赤い点は
+        円がくっきり見えるようになった場所、点線円の目盛りは中心からの
         視角（度）です。
       </p>
 
@@ -184,7 +184,7 @@ export default function Result({ settings, results, onRetry, onReset }: Props) {
       {avg !== null && (
         <p className="summary-line">
           平均すると、中心からおよそ <strong>{avg.toFixed(1)}°</strong>{' '}
-          のあたりから点がはっきり見えるようになっています。
+          のあたりから円がくっきり見えるようになっています。
         </p>
       )}
 
@@ -192,7 +192,7 @@ export default function Result({ settings, results, onRetry, onReset }: Props) {
         <thead>
           <tr>
             <th>方向</th>
-            <th>はっきり見えるようになった距離（視角）</th>
+            <th>円がくっきり見えるようになった距離（視角）</th>
           </tr>
         </thead>
         <tbody>
