@@ -79,151 +79,155 @@ export default function Result({
         視角（度）です。
       </p>
 
-      <svg
-        viewBox={`0 0 ${SIZE} ${SIZE}`}
-        className="field-map"
-        role="img"
-        aria-label="視野マップ"
-      >
-        <rect
-          width={SIZE}
-          height={SIZE}
-          fill="#fafafa"
-          stroke="#ddd"
-          rx={12}
-        />
-
-        {/* 目盛り円 */}
-        {gridSteps.map((deg) => (
-          <g key={deg}>
-            <circle
-              cx={CENTER}
-              cy={CENTER}
-              r={deg * scale}
-              fill="none"
-              stroke="#ccc"
-              strokeDasharray="4 4"
+      <div className="result-columns">
+        <div className="result-chart">
+          <svg
+            viewBox={`0 0 ${SIZE} ${SIZE}`}
+            className="field-map"
+            role="img"
+            aria-label="視野マップ"
+          >
+            <rect
+              width={SIZE}
+              height={SIZE}
+              fill="#fafafa"
+              stroke="#ddd"
+              rx={12}
             />
-            {/* 右端の「右」ラベルと重なる位置の目盛りは表示しない */}
-            {CENTER + deg * scale + 3 < SIZE - 70 && (
-              <text
-                x={CENTER + deg * scale + 3}
-                y={CENTER - 4}
-                fill="#555"
-                fontSize={16}
-              >
-                {deg}°
-              </text>
-            )}
-          </g>
-        ))}
 
-        {/* 方向ラベル */}
-        <text x={CENTER} y={26} fill="#333" fontSize={22} fontWeight="bold" textAnchor="middle">
-          上
-        </text>
-        <text x={CENTER} y={SIZE - 8} fill="#333" fontSize={22} fontWeight="bold" textAnchor="middle">
-          下
-        </text>
-        <text x={8} y={CENTER + 8} fill="#333" fontSize={22} fontWeight="bold">
-          左
-        </text>
-        <text x={SIZE - 30} y={CENTER + 8} fill="#333" fontSize={22} fontWeight="bold">
-          右
-        </text>
+            {/* 目盛り円 */}
+            {gridSteps.map((deg) => (
+              <g key={deg}>
+                <circle
+                  cx={CENTER}
+                  cy={CENTER}
+                  r={deg * scale}
+                  fill="none"
+                  stroke="#ccc"
+                  strokeDasharray="4 4"
+                />
+                {/* 右端の「右」ラベルと重なる位置の目盛りは表示しない */}
+                {CENTER + deg * scale + 3 < SIZE - 70 && (
+                  <text
+                    x={CENTER + deg * scale + 3}
+                    y={CENTER - 4}
+                    fill="#555"
+                    fontSize={16}
+                  >
+                    {deg}°
+                  </text>
+                )}
+              </g>
+            ))}
 
-        {/* 見えづらい領域 */}
-        {boundaryPts.length >= 3 && (
-          <path
-            d={smoothClosedPath(boundaryPts)}
-            fill="rgba(120, 120, 130, 0.2)"
-            stroke="#999"
-            strokeWidth={1.5}
-          />
-        )}
+            {/* 方向ラベル */}
+            <text x={CENTER} y={26} fill="#333" fontSize={22} fontWeight="bold" textAnchor="middle">
+              上
+            </text>
+            <text x={CENTER} y={SIZE - 8} fill="#333" fontSize={22} fontWeight="bold" textAnchor="middle">
+              下
+            </text>
+            <text x={8} y={CENTER + 8} fill="#333" fontSize={22} fontWeight="bold">
+              左
+            </text>
+            <text x={SIZE - 30} y={CENTER + 8} fill="#333" fontSize={22} fontWeight="bold">
+              右
+            </text>
 
-        {/* 点が動いた経路と応答位置 */}
-        {ordered.map((r) => {
-          const end = polar(r.dirDeg, effectiveDeg(r))
-          const pathEnd = polar(r.dirDeg, r.boundaryDeg ?? r.maxDeg)
-          return (
-            <g key={r.dirDeg}>
-              <line
-                x1={CENTER}
-                y1={CENTER}
-                x2={pathEnd.x}
-                y2={pathEnd.y}
-                stroke="#e5e5e5"
-                strokeWidth={1}
+            {/* 見えづらい領域 */}
+            {boundaryPts.length >= 3 && (
+              <path
+                d={smoothClosedPath(boundaryPts)}
+                fill="rgba(120, 120, 130, 0.2)"
+                stroke="#999"
+                strokeWidth={1.5}
               />
-              {r.boundaryDeg !== null ? (
-                <circle cx={end.x} cy={end.y} r={6} fill="#d92020" />
-              ) : (
-                <g stroke="#aaa" strokeWidth={2}>
+            )}
+
+            {/* 点が動いた経路と応答位置 */}
+            {ordered.map((r) => {
+              const end = polar(r.dirDeg, effectiveDeg(r))
+              const pathEnd = polar(r.dirDeg, r.boundaryDeg ?? r.maxDeg)
+              return (
+                <g key={r.dirDeg}>
                   <line
-                    x1={pathEnd.x - 5}
-                    y1={pathEnd.y - 5}
-                    x2={pathEnd.x + 5}
-                    y2={pathEnd.y + 5}
+                    x1={CENTER}
+                    y1={CENTER}
+                    x2={pathEnd.x}
+                    y2={pathEnd.y}
+                    stroke="#e5e5e5"
+                    strokeWidth={1}
                   />
-                  <line
-                    x1={pathEnd.x - 5}
-                    y1={pathEnd.y + 5}
-                    x2={pathEnd.x + 5}
-                    y2={pathEnd.y - 5}
-                  />
+                  {r.boundaryDeg !== null ? (
+                    <circle cx={end.x} cy={end.y} r={6} fill="#d92020" />
+                  ) : (
+                    <g stroke="#aaa" strokeWidth={2}>
+                      <line
+                        x1={pathEnd.x - 5}
+                        y1={pathEnd.y - 5}
+                        x2={pathEnd.x + 5}
+                        y2={pathEnd.y + 5}
+                      />
+                      <line
+                        x1={pathEnd.x - 5}
+                        y1={pathEnd.y + 5}
+                        x2={pathEnd.x + 5}
+                        y2={pathEnd.y - 5}
+                      />
+                    </g>
+                  )}
                 </g>
-              )}
-            </g>
-          )
-        })}
+              )
+            })}
 
-        {/* 中心マーク */}
-        <line
-          x1={CENTER - 6}
-          y1={CENTER}
-          x2={CENTER + 6}
-          y2={CENTER}
-          stroke="#d92020"
-          strokeWidth={2}
-        />
-        <line
-          x1={CENTER}
-          y1={CENTER - 6}
-          x2={CENTER}
-          y2={CENTER + 6}
-          stroke="#d92020"
-          strokeWidth={2}
-        />
-      </svg>
+            {/* 中心マーク */}
+            <line
+              x1={CENTER - 6}
+              y1={CENTER}
+              x2={CENTER + 6}
+              y2={CENTER}
+              stroke="#d92020"
+              strokeWidth={2}
+            />
+            <line
+              x1={CENTER}
+              y1={CENTER - 6}
+              x2={CENTER}
+              y2={CENTER + 6}
+              stroke="#d92020"
+              strokeWidth={2}
+            />
+          </svg>
 
-      {avg !== null && (
-        <p className="summary-line">
-          平均すると、中心からおよそ <strong>{avg.toFixed(1)}°</strong>{' '}
-          のあたりから円がくっきり見えるようになっています。
-        </p>
-      )}
+          {avg !== null && (
+            <p className="summary-line">
+              平均すると、中心からおよそ <strong>{avg.toFixed(1)}°</strong>{' '}
+              のあたりから円がくっきり見えるようになっています。
+            </p>
+          )}
+        </div>
 
-      <table>
-        <thead>
-          <tr>
-            <th>方向</th>
-            <th>円がくっきり見えるようになった距離（視角）</th>
-          </tr>
-        </thead>
-        <tbody>
-          {ordered.map((r) => (
-            <tr key={r.dirDeg}>
-              <td>{dirLabel(r.dirDeg)}</td>
-              <td>
-                {r.boundaryDeg !== null
-                  ? `約 ${r.boundaryDeg.toFixed(1)}°`
-                  : `${r.maxDeg}° より外側（範囲内では応答なし）`}
-              </td>
+        <table>
+          <thead>
+            <tr>
+              <th>方向</th>
+              <th>円がくっきり見えるようになった距離（視角）</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {ordered.map((r) => (
+              <tr key={r.dirDeg}>
+                <td>{dirLabel(r.dirDeg)}</td>
+                <td>
+                  {r.boundaryDeg !== null
+                    ? `約 ${r.boundaryDeg.toFixed(1)}°`
+                    : `${r.maxDeg}° より外側（範囲内では応答なし）`}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
 
       <p className="warn">
         ⚠️ この結果は簡易測定による目安です。固視のずれや環境によって変わります。

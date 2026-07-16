@@ -24,7 +24,7 @@ export default function Setup({ onStart, onDemo, onHistory }: Props) {
     <div className="setup">
       <h1>視野マッパー</h1>
       <p className="lead">
-        画面から約20cmの距離で測定してください。測らない方の眼は手で軽くおおいます。
+        画面から約20cmの距離で測定してください。
       </p>
 
       <div className="eye-select">

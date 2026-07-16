@@ -66,7 +66,7 @@ button.primary:hover {
 /* ---- 設定画面 ---- */
 
 .setup {
-  max-width: 780px;
+  max-width: 960px;
   margin: 0 auto;
   padding: 2rem 1.5rem 4rem;
   min-height: 100vh;
@@ -229,7 +229,7 @@ button.danger:hover {
 /* ---- 履歴画面 ---- */
 
 .history {
-  max-width: 780px;
+  max-width: 1000px;
   margin: 0 auto;
   padding: 2rem 1.5rem 4rem;
 }
@@ -281,16 +281,41 @@ button.danger:hover {
 /* ---- 結果画面 ---- */
 
 .result {
-  max-width: 780px;
+  max-width: 1360px;
   margin: 0 auto;
   padding: 2rem 1.5rem 4rem;
 }
 
+/* 説明文は読みやすい行長に抑えつつ、下のカラムは横幅いっぱいに使う */
+.result .lead {
+  max-width: 40em;
+}
+
+/* 広い画面ではチャートと表を横に並べて横幅を有効活用する。
+   狭い画面では flex-wrap で自然に縦積みに戻る */
+.result-columns {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 1rem 3rem;
+  margin-top: 1rem;
+}
+
+.result-chart {
+  flex: 1 1 480px;
+  max-width: 640px;
+}
+
+.result-columns table {
+  flex: 0 1 auto;
+}
+
 .field-map {
   width: 100%;
-  max-width: 560px;
+  max-width: 640px;
   display: block;
-  margin: 1rem auto;
+  margin: 0 auto 1rem;
 }
 
 .saved-at {
