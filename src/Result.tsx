@@ -1,11 +1,15 @@
 import type { DirectionResult, Settings } from './types'
 import { dirLabel, EYE_LABEL } from './types'
+import { averageBoundaryDeg, formatSavedAt } from './historyStore'
 
 interface Props {
   settings: Settings
   results: DirectionResult[]
+  /** 履歴に保存された日時 (ISO 8601)。サンプル表示など未保存のときは null */
+  savedAt: string | null
   onRetry: () => void
   onReset: () => void
+  onHistory: () => void
 }
 
 /** 閉じた Catmull-Rom スプラインを SVG パスに変換する */
@@ -30,7 +34,14 @@ function smoothClosedPath(pts: { x: number; y: number }[]): string {
 const SIZE = 480
 const CENTER = SIZE / 2
 
-export default function Result({ settings, results, onRetry, onReset }: Props) {
+export default function Result({
+  settings,
+  results,
+  savedAt,
+  onRetry,
+  onReset,
+  onHistory,
+}: Props) {
   // 応答がなかった方向は「測定範囲の外まで見えづらい」とみなす
   const effectiveDeg = (r: DirectionResult) => r.boundaryDeg ?? r.maxDeg + 2
 
@@ -50,15 +61,17 @@ export default function Result({ settings, results, onRetry, onReset }: Props) {
   const ordered = [...results].sort((a, b) => a.dirDeg - b.dirDeg)
   const boundaryPts = ordered.map((r) => polar(r.dirDeg, effectiveDeg(r)))
 
-  const known = results.filter((r) => r.boundaryDeg !== null)
-  const avg =
-    known.length > 0
-      ? known.reduce((sum, r) => sum + r.boundaryDeg!, 0) / known.length
-      : null
+  const avg = averageBoundaryDeg(results)
 
   return (
     <div className="result">
       <h1>測定結果（{EYE_LABEL[settings.eye]}）</h1>
+
+      {savedAt !== null && (
+        <p className="saved-at">
+          測定日時: {formatSavedAt(savedAt)}（この端末の履歴に保存済み）
+        </p>
+      )}
 
       <p className="lead">
         グレーの領域が「円がくっきり見えなかった範囲」です。赤い点は
@@ -219,6 +232,7 @@ export default function Result({ settings, results, onRetry, onReset }: Props) {
           同じ設定でもう一度
         </button>
         <button onClick={onReset}>設定からやり直す</button>
+        <button onClick={onHistory}>測定履歴</button>
       </div>
     </div>
   )

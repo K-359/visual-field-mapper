@@ -8,9 +8,10 @@ const PX_PER_MM = 96 / 25.4 // 一般的なディスプレイ (96dpi) を想定
 interface Props {
   onStart: (settings: Settings) => void
   onDemo: (settings: Settings) => void
+  onHistory: () => void
 }
 
-export default function Setup({ onStart, onDemo }: Props) {
+export default function Setup({ onStart, onDemo, onHistory }: Props) {
   const [eye, setEye] = useState<Eye>('right')
 
   const settings: Settings = {
@@ -45,6 +46,7 @@ export default function Setup({ onStart, onDemo }: Props) {
           測定をはじめる
         </button>
         <button onClick={() => onDemo(settings)}>結果のサンプル</button>
+        <button onClick={onHistory}>測定履歴</button>
       </div>
 
       <p className="note">

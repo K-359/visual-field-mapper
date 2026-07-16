@@ -1,4 +1,4 @@
-export type Phase = 'setup' | 'test' | 'result'
+export type Phase = 'setup' | 'test' | 'result' | 'history'
 
 export type Eye = 'right' | 'left' | 'both'
 

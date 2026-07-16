@@ -184,6 +184,68 @@ button.primary:hover {
   opacity: 0.5;
 }
 
+button.danger {
+  color: #b32020;
+  border-color: #d9a0a0;
+  background: #fff;
+}
+
+button.danger:hover {
+  background: #fdf0f0;
+}
+
+/* ---- 履歴画面 ---- */
+
+.history {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem 4rem;
+}
+
+.history-empty {
+  color: #888;
+  text-align: center;
+  margin: 3rem 0;
+}
+
+.history-list {
+  list-style: none;
+  padding: 0;
+  margin: 1.2rem 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.history-item {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 0.6em 1em;
+}
+
+.history-item .meta {
+  flex: 1;
+  min-width: 200px;
+}
+
+.history-item .date {
+  font-weight: bold;
+}
+
+.history-item .detail {
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.history-item button {
+  font-size: 0.9rem;
+  padding: 0.35em 1em;
+}
+
 /* ---- 結果画面 ---- */
 
 .result {
@@ -197,6 +259,12 @@ button.primary:hover {
   max-width: 480px;
   display: block;
   margin: 1rem auto;
+}
+
+.saved-at {
+  color: #888;
+  font-size: 0.9rem;
+  margin-top: -0.5rem;
 }
 
 .summary-line {
