@@ -56,6 +56,12 @@ button.primary:hover {
   max-width: 720px;
   margin: 0 auto;
   padding: 2rem 1.5rem 4rem;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
 }
 
 .lead {
@@ -70,36 +76,16 @@ button.primary:hover {
   font-size: 0.92rem;
 }
 
-.card-gauge {
-  border: 2px dashed #3b6fd4;
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #3b6fd4;
-  font-size: 0.9rem;
-  margin-bottom: 0.8rem;
-  user-select: none;
-}
-
-.setup input[type='range'] {
-  width: 100%;
-  max-width: 600px;
-}
-
-.setup input[type='number'] {
-  width: 5em;
-  font-size: 1rem;
-  padding: 0.3em;
-  background: #fff;
-  color: #222;
-  border: 1px solid #bbb;
-  border-radius: 6px;
+.note {
+  color: #888;
+  font-size: 0.85rem;
+  margin-top: 2.5rem;
 }
 
 .eye-select {
   display: flex;
   gap: 1.5rem;
+  margin: 1.2rem 0;
 }
 
 .eye-select label {
