@@ -1,4 +1,5 @@
-import type { DirectionResult, Settings } from './types'
+import type { MeasurementResult, Settings } from './types'
+import { isPointResult } from './types'
 
 /** 保存される 1 回ぶんの測定記録 */
 export interface HistoryRecord {
@@ -6,7 +7,7 @@ export interface HistoryRecord {
   /** 保存日時 (ISO 8601) */
   savedAt: string
   settings: Settings
-  results: DirectionResult[]
+  results: MeasurementResult[]
 }
 
 const STORAGE_KEY = 'visual-field-mapper-history'
@@ -49,7 +50,7 @@ function persist(records: HistoryRecord[]) {
 /** 測定結果を履歴の先頭に保存する */
 export function addRecord(
   settings: Settings,
-  results: DirectionResult[],
+  results: MeasurementResult[],
 ): HistoryRecord {
   const record: HistoryRecord = {
     id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
@@ -78,10 +79,24 @@ export function clearHistory() {
 }
 
 /** 応答があった方向の境界視角の平均。応答がひとつもなければ null */
-export function averageBoundaryDeg(results: DirectionResult[]): number | null {
-  const known = results.filter((r) => r.boundaryDeg !== null)
+export function averageBoundaryDeg(results: MeasurementResult[]): number | null {
+  const known = results.filter(
+    (r) => !isPointResult(r) && r.boundaryDeg !== null,
+  )
   if (known.length === 0) return null
-  return known.reduce((sum, r) => sum + r.boundaryDeg!, 0) / known.length
+  return (
+    known.reduce(
+      (sum, r) => sum + (!isPointResult(r) ? (r.boundaryDeg ?? 0) : 0),
+      0,
+    ) / known.length
+  )
+}
+
+/** 新方式の各点で、円に気付いた半径の平均 */
+export function averageRadiusDeg(results: MeasurementResult[]): number | null {
+  const points = results.filter(isPointResult)
+  if (points.length === 0) return null
+  return points.reduce((sum, point) => sum + point.radiusDeg, 0) / points.length
 }
 
 export function formatSavedAt(iso: string): string {

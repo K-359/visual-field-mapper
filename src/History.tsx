@@ -2,12 +2,13 @@ import { useState } from 'react'
 import type { HistoryRecord } from './historyStore'
 import {
   averageBoundaryDeg,
+  averageRadiusDeg,
   clearHistory,
   deleteRecord,
   formatSavedAt,
   loadHistory,
 } from './historyStore'
-import { EYE_LABEL } from './types'
+import { EYE_LABEL, isPointResult } from './types'
 
 interface Props {
   onView: (record: HistoryRecord) => void
@@ -40,13 +41,24 @@ export default function History({ onView, onBack }: Props) {
         <ul className="history-list">
           {records.map((r) => {
             const avg = averageBoundaryDeg(r.results)
+            const avgRadius = averageRadiusDeg(r.results)
+            const repeatCount =
+              r.results.length > 0 && isPointResult(r.results[0])
+                ? r.results[0].sampleCount
+                : undefined
             return (
               <li key={r.id} className="history-item">
                 <div className="meta">
                   <div className="date">{formatSavedAt(r.savedAt)}</div>
                   <div className="detail">
                     {EYE_LABEL[r.settings.eye]} ／{' '}
-                    {avg !== null
+                    {avgRadius !== null
+                      ? `${r.results.length}箇所${
+                          repeatCount !== undefined
+                            ? `（各${repeatCount}回）`
+                            : ''
+                        } ／ 平均検出半径 約 ${avgRadius.toFixed(2)}°`
+                      : avg !== null
                       ? `平均境界 約 ${avg.toFixed(1)}°`
                       : '範囲内では応答なし'}
                   </div>

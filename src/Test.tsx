@@ -1,83 +1,118 @@
-import { useEffect, useState } from 'react'
-import type { DirectionResult, Settings } from './types'
-import { DIRECTIONS, dirLabel, pxPerDeg } from './types'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import type { PointResult, Settings } from './types'
+import { pxPerDeg } from './types'
+import {
+  createShuffledTrialPlan,
+  MEASUREMENT_LOCATIONS,
+  REPETITIONS_PER_LOCATION,
+  TOTAL_TRIAL_COUNT,
+} from './measurementPlan'
+import type { MeasurementLocation } from './measurementPlan'
 
 interface Props {
   settings: Settings
-  onFinish: (results: DirectionResult[]) => void
+  onFinish: (results: PointResult[]) => void
   onCancel: () => void
 }
 
-interface CircleMeasurement {
-  dirDeg: number
-  maxDeg: number
-  eccDeg: number
-  boundaryDeg: number | undefined
+interface Viewport {
+  w: number
+  h: number
 }
 
-const TARGET_SIZE_DEG = 2.2 // 円を配置する領域の直径（視角、度）
-const MIN_DEG = 2 // ターゲットの初期位置
-const MOVE_STEP_DEG = 0.2 // 矢印キー1回あたりの移動量（視角、度）
-const MARGIN_PX = 30 // 画面端の余白
-const MAX_DEG_CAP = 30 // 測定する離心度の上限
+interface TestPoint {
+  locationId: string
+  x: number
+  y: number
+  maxRadiusDeg: number
+}
 
-/** 各方向について、画面内に収まる最大離心度を計算する */
-function planCircles(ppd: number, w: number, h: number): CircleMeasurement[] {
-  const cx = w / 2
-  const cy = h / 2
-  return DIRECTIONS.map((dirDeg) => {
-    const rad = (dirDeg * Math.PI) / 180
-    const dx = Math.cos(rad)
-    const dy = -Math.sin(rad) // 画面座標は y が下向き
-    const tx =
-      dx > 0
-        ? (w - MARGIN_PX - cx) / dx
-        : dx < 0
-          ? (MARGIN_PX - cx) / dx
-          : Infinity
-    const ty =
-      dy > 0
-        ? (h - MARGIN_PX - cy) / dy
-        : dy < 0
-          ? (MARGIN_PX - cy) / dy
-          : Infinity
-    const maxPx = Math.min(tx, ty)
-    const maxDeg = Math.min(maxPx / ppd, MAX_DEG_CAP)
+interface TrialResult extends PointResult {
+  locationId: string
+}
+
+const GROWTH_DEG_PER_SECOND = 0.15
+const MAX_RADIUS_DEG = 5
+const EDGE_MARGIN_PX = 20
+const HUD_RESERVED_PX = 100
+
+const round2 = (value: number) => Math.round(value * 100) / 100
+
+/** 固定測定地点を、現在の画面内の座標へ変換する */
+function resolvePoint(
+  location: MeasurementLocation,
+  ppd: number,
+  viewport: Viewport,
+): TestPoint {
+  const centerX = viewport.w / 2
+  const centerY = viewport.h / 2
+  const availableFromCenterPx = Math.max(
+    0,
+    Math.min(
+      centerX - EDGE_MARGIN_PX,
+      viewport.w - EDGE_MARGIN_PX - centerX,
+      centerY - EDGE_MARGIN_PX,
+      viewport.h - HUD_RESERVED_PX - centerY,
+    ),
+  )
+  const maxRadiusPx = Math.min(
+    MAX_RADIUS_DEG * ppd,
+    availableFromCenterPx,
+  )
+  const spawnRadiusPx = Math.max(0, availableFromCenterPx - maxRadiusPx)
+  const distance = location.radiusRatio * spawnRadiusPx
+
+  return {
+    locationId: location.id,
+    x: centerX + Math.cos(location.angleRad) * distance,
+    y: centerY - Math.sin(location.angleRad) * distance,
+    maxRadiusDeg: maxRadiusPx / ppd,
+  }
+}
+
+/** 各地点の複数回ぶんの結果を、地点ごとの平均へまとめる */
+function averageLocationResults(results: TrialResult[]): PointResult[] {
+  return MEASUREMENT_LOCATIONS.map((location) => {
+    const samples = results.filter(
+      (result) => result.locationId === location.id,
+    )
+    const average = (key: 'xDeg' | 'yDeg' | 'radiusDeg') =>
+      samples.reduce((sum, sample) => sum + sample[key], 0) / samples.length
+
     return {
-      dirDeg,
-      maxDeg: Math.round(maxDeg * 10) / 10,
-      eccDeg: MIN_DEG,
-      boundaryDeg: undefined,
+      xDeg: round2(average('xDeg')),
+      yDeg: round2(average('yDeg')),
+      radiusDeg: round2(average('radiusDeg')),
+      sampleCount: samples.length,
     }
   })
 }
 
 export default function Test({ settings, onFinish, onCancel }: Props) {
   const ppd = pxPerDeg(settings)
-  const [viewport, setViewport] = useState({
+  const initialViewport = {
     w: window.innerWidth,
     h: window.innerHeight,
-  })
-  const [circles, setCircles] = useState(() =>
-    planCircles(ppd, window.innerWidth, window.innerHeight),
-  )
+  }
+  const [viewport, setViewport] = useState<Viewport>(initialViewport)
+  const viewportRef = useRef(initialViewport)
+  const [trialPlan] = useState(createShuffledTrialPlan)
   const [activeIndex, setActiveIndex] = useState(0)
-
-  const activeCircle = circles[activeIndex]
+  const activePoint = useMemo(
+    () => resolvePoint(trialPlan[activeIndex], ppd, viewport),
+    [activeIndex, ppd, trialPlan, viewport],
+  )
+  const [radiusDeg, setRadiusDeg] = useState(0)
+  const startTimeRef = useRef(performance.now())
+  const radiusRef = useRef(0)
+  const maxRadiusRef = useRef(activePoint.maxRadiusDeg)
+  const resultsRef = useRef<TrialResult[]>([])
 
   useEffect(() => {
     const onResize = () => {
-      const w = window.innerWidth
-      const h = window.innerHeight
-      setViewport({ w, h })
-      const plan = planCircles(ppd, w, h)
-      setCircles((current) =>
-        current.map((circle, index) => ({
-          ...circle,
-          maxDeg: plan[index].maxDeg,
-          eccDeg: Math.min(circle.eccDeg, plan[index].maxDeg),
-        })),
-      )
+      const next = { w: window.innerWidth, h: window.innerHeight }
+      viewportRef.current = next
+      setViewport(next)
     }
     // window の resize イベントが発火しない環境（ビューポートエミュレーション等）
     // もあるため、ルート要素のサイズ変化を ResizeObserver で監視する
@@ -91,55 +126,51 @@ export default function Test({ settings, onFinish, onCancel }: Props) {
   }, [ppd])
 
   useEffect(() => {
-    const moveActiveCircle = (deltaDeg: number) => {
-      setCircles((current) =>
-        current.map((circle, index) =>
-          index === activeIndex
-            ? {
-                ...circle,
-                eccDeg: Math.min(
-                  circle.maxDeg,
-                  Math.max(MIN_DEG, circle.eccDeg + deltaDeg),
-                ),
-              }
-            : circle,
-        ),
+    let frameId = 0
+    const animate = (now: number) => {
+      const nextRadius = Math.min(
+        maxRadiusRef.current,
+        ((now - startTimeRef.current) / 1000) * GROWTH_DEG_PER_SECOND,
       )
+      radiusRef.current = nextRadius
+      setRadiusDeg(nextRadius)
+      frameId = requestAnimationFrame(animate)
     }
+    frameId = requestAnimationFrame(animate)
+    return () => cancelAnimationFrame(frameId)
+  }, [])
 
+  useEffect(() => {
     const confirmActiveCircle = () => {
-      const updated = circles.map((circle, index) =>
-        index === activeIndex
-          ? {
-              ...circle,
-              boundaryDeg: Math.round(circle.eccDeg * 10) / 10,
-            }
-          : circle,
-      )
+      const result: TrialResult = {
+        locationId: activePoint.locationId,
+        xDeg: round2((activePoint.x - viewport.w / 2) / ppd),
+        yDeg: round2((viewport.h / 2 - activePoint.y) / ppd),
+        radiusDeg: round2(radiusRef.current),
+      }
+      const updated = [...resultsRef.current, result]
+      resultsRef.current = updated
 
-      if (activeIndex === updated.length - 1) {
-        onFinish(
-          updated.map((circle) => ({
-            dirDeg: circle.dirDeg,
-            maxDeg: circle.maxDeg,
-            boundaryDeg: circle.boundaryDeg ?? circle.eccDeg,
-          })),
-        )
+      if (updated.length === TOTAL_TRIAL_COUNT) {
+        onFinish(averageLocationResults(updated))
       } else {
-        setCircles(updated)
-        setActiveIndex((index) => index + 1)
+        const nextPoint = resolvePoint(
+          trialPlan[updated.length],
+          ppd,
+          viewportRef.current,
+        )
+        // Enter の処理中に時計をリセットし、次の円の拡大を直ちに開始する。
+        startTimeRef.current = performance.now()
+        radiusRef.current = 0
+        maxRadiusRef.current = nextPoint.maxRadiusDeg
+        setRadiusDeg(0)
+        setActiveIndex(updated.length)
       }
     }
 
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         onCancel()
-      } else if (e.key === 'ArrowUp' || e.key === 'ArrowRight') {
-        e.preventDefault()
-        moveActiveCircle(MOVE_STEP_DEG)
-      } else if (e.key === 'ArrowDown' || e.key === 'ArrowLeft') {
-        e.preventDefault()
-        moveActiveCircle(-MOVE_STEP_DEG)
       } else if (e.key === 'Enter' && !e.repeat) {
         e.preventDefault()
         confirmActiveCircle()
@@ -148,17 +179,10 @@ export default function Test({ settings, onFinish, onCancel }: Props) {
 
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [activeIndex, circles, onCancel, onFinish])
+  }, [activePoint, onCancel, onFinish, ppd, trialPlan, viewport])
 
-  const cx = viewport.w / 2
-  const cy = viewport.h / 2
-  const targetPx = Math.max(50, TARGET_SIZE_DEG * ppd)
-
-  const rad = (activeCircle.dirDeg * Math.PI) / 180
-  const activePos = {
-    x: cx + Math.cos(rad) * activeCircle.eccDeg * ppd,
-    y: cy - Math.sin(rad) * activeCircle.eccDeg * ppd,
-  }
+  const diameterPx = radiusDeg * ppd * 2
+  const reachedMax = radiusDeg >= activePoint.maxRadiusDeg
 
   return (
     <div className="test-screen">
@@ -166,26 +190,26 @@ export default function Test({ settings, onFinish, onCancel }: Props) {
       <div className="fix-cross vertical" />
 
       <div
-        key={activeCircle.dirDeg}
+        key={activeIndex}
         className="circle-target"
-        style={{ left: activePos.x, top: activePos.y }}
-        aria-label={`${dirLabel(activeCircle.dirDeg)}の円`}
-      >
-        <svg
-          className="visibility-target"
-          style={{ width: targetPx, height: targetPx }}
-          viewBox="-28 -28 56 56"
-          aria-hidden="true"
-        >
-          <circle r="12" strokeWidth="6" />
-        </svg>
-      </div>
+        style={{
+          left: activePoint.x,
+          top: activePoint.y,
+          width: diameterPx,
+          height: diameterPx,
+        }}
+        role="img"
+        aria-label="大きくなる赤い円"
+      />
 
       <div className="test-hud">
         <span>
-          {activeIndex + 1} / {circles.length} 個目（{dirLabel(activeCircle.dirDeg)}）
+          {activeIndex + 1} / {TOTAL_TRIAL_COUNT} 回目
         </span>
-        <span>↑・→ 外側　↓・← 内側　Enter 次の円　Esc 中止</span>
+        <span>
+          {reachedMax ? '最大サイズです　' : ''}
+          円に気付いたら Enter　各地点{REPETITIONS_PER_LOCATION}回　Esc 中止
+        </span>
         <button type="button" onClick={onCancel}>
           測定を中止
         </button>
