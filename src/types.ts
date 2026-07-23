@@ -20,6 +20,25 @@ export interface DirectionResult {
   boundaryDeg: number | null
 }
 
+/** 固定地点で行った測定結果 */
+export interface PointResult {
+  /** 固視点を原点とする水平方向の位置（視角、度。右が正） */
+  xDeg: number
+  /** 固視点を原点とする垂直方向の位置（視角、度。上が正） */
+  yDeg: number
+  /** 円に気付いて Enter を押した時点の半径（視角、度） */
+  radiusDeg: number
+  /** 同じ地点で集約した試行数。旧形式の結果では未設定 */
+  sampleCount?: number
+}
+
+/** 現行の点測定と、旧バージョンの方向測定の両方を読める結果型 */
+export type MeasurementResult = PointResult | DirectionResult
+
+export function isPointResult(result: MeasurementResult): result is PointResult {
+  return 'xDeg' in result
+}
+
 /** 検査に使う 16 方向（22.5° 刻み） */
 export const DIRECTIONS = Array.from({ length: 16 }, (_, i) => i * 22.5)
 
