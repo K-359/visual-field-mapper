@@ -326,6 +326,22 @@ button.danger:hover {
   margin-top: -1rem;
 }
 
+.value-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5em;
+  cursor: pointer;
+  font-size: 1.1rem;
+  margin: -0.5rem auto 1rem;
+}
+
+.value-toggle input[type='checkbox'] {
+  width: 1.3em;
+  height: 1.3em;
+  accent-color: #1a4fc4;
+}
+
 .heatmap-legend {
   max-width: 560px;
   margin: -0.5rem auto 1.5rem;

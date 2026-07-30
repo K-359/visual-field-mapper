@@ -7,12 +7,28 @@ export interface MeasurementLocation {
 }
 
 export const REPETITIONS_PER_LOCATION = 1
-export const RING_POINT_COUNTS = [16, 16, 16] as const
 
-/** 3つの同心円それぞれに、共通する16方向を配置した固定測定地点 */
-export const MEASUREMENT_LOCATIONS: MeasurementLocation[] =
-  RING_POINT_COUNTS.flatMap((pointCount, ringIndex) => {
-    const radiusRatio = (ringIndex + 1) / RING_POINT_COUNTS.length
+interface RingDefinition {
+  /** 最外周を1とする、固視点からの距離 */
+  radiusRatio: number
+  /** そのリングに等間隔で並べる地点数 */
+  pointCount: number
+}
+
+/**
+ * 中心寄りの感度をより細かく見るため、最内周（1/3）と固視点のちょうど中間に
+ * 8方向（東西南北とその間）のリングを追加している
+ */
+export const RINGS: readonly RingDefinition[] = [
+  { radiusRatio: 1 / 6, pointCount: 8 },
+  { radiusRatio: 1 / 3, pointCount: 16 },
+  { radiusRatio: 2 / 3, pointCount: 16 },
+  { radiusRatio: 1, pointCount: 16 },
+]
+
+/** 同心円ごとに等間隔の方向を配置した固定測定地点 */
+export const MEASUREMENT_LOCATIONS: MeasurementLocation[] = RINGS.flatMap(
+  ({ radiusRatio, pointCount }, ringIndex) => {
     const angleStep = (Math.PI * 2) / pointCount
 
     return Array.from({ length: pointCount }, (_, pointIndex) => ({
@@ -20,7 +36,8 @@ export const MEASUREMENT_LOCATIONS: MeasurementLocation[] =
       radiusRatio,
       angleRad: pointIndex * angleStep,
     }))
-  })
+  },
+)
 
 export const TOTAL_TRIAL_COUNT =
   MEASUREMENT_LOCATIONS.length * REPETITIONS_PER_LOCATION

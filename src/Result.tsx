@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import type {
   DirectionResult,
   MeasurementResult,
@@ -40,6 +40,19 @@ function smoothClosedPath(pts: { x: number; y: number }[]): string {
 const SIZE = 480
 const CENTER = SIZE / 2
 const HEATMAP_RESOLUTION = 200
+/**
+ * 平滑化幅を、その場所の測定点間隔の何倍にするか。
+ * 1.0 に近づけるほど隣の地点と混ざって実測値の高低が潰れ、
+ * 小さすぎると地点ごとの水玉模様になる。
+ */
+const SMOOTHING_FACTOR = 0.5
+/**
+ * 測定点間隔そのものをならすときの幅。地点ごとの間隔をこの幅で平均して
+ * 平滑化幅を決めるので、平滑化幅は場所に対して連続に変化する。
+ * （最寄りの地点の間隔をそのまま使うと、最寄りが入れ替わる線で
+ *   平滑化幅が跳んで、地図に不自然な境界が出る）
+ */
+const GAP_SMOOTHING_DIVISOR = 4
 
 type Rgba = [number, number, number, number]
 
@@ -60,6 +73,8 @@ function heatmapColor(value: number): Rgba {
 /**
  * 測定地点間をガウス重みで補間し、透過PNGのデータURLを作る。
  * 各地点の近くほどその地点の値が強く反映される。
+ * 測定地点は中心ほど密・外周ほど粗いので、平滑化幅は一定にせず
+ * その場所に最も近い地点の間隔に合わせる。
  */
 function createHeatmapDataUrl(
   results: PointResult[],
@@ -79,8 +94,22 @@ function createHeatmapDataUrl(
   const minRadius = Math.min(...radii)
   const maxRadius = Math.max(...radii)
   const valueRange = maxRadius - minRadius
-  const smoothingDeg = Math.max(fieldRadiusDeg / 5, 1)
-  const twoSigmaSquared = 2 * smoothingDeg * smoothingDeg
+
+  // 各地点から最も近い地点までの距離＝その場所での測定の細かさ
+  const nearestGapDeg = results.map((result, index) => {
+    let smallest = Infinity
+    results.forEach((other, otherIndex) => {
+      if (index === otherIndex) return
+      smallest = Math.min(
+        smallest,
+        Math.hypot(result.xDeg - other.xDeg, result.yDeg - other.yDeg),
+      )
+    })
+    return Number.isFinite(smallest) ? smallest : fieldRadiusDeg
+  })
+  const squaredDistances = new Float64Array(results.length)
+  const gapSmoothingDeg = Math.max(fieldRadiusDeg / GAP_SMOOTHING_DIVISOR, 1)
+  const twoGapSigmaSquared = 2 * gapSmoothingDeg * gapSmoothingDeg
 
   for (let pixelY = 0; pixelY < HEATMAP_RESOLUTION; pixelY += 1) {
     const yDeg =
@@ -92,13 +121,30 @@ function createHeatmapDataUrl(
       const distanceFromCenter = Math.hypot(xDeg, yDeg)
       if (distanceFromCenter > fieldRadiusDeg) continue
 
+      // この場所での測定点間隔を、周囲の地点からなだらかに求める
+      let weightedGap = 0
+      let gapWeight = 0
+      for (let index = 0; index < results.length; index += 1) {
+        const dx = xDeg - results[index].xDeg
+        const dy = yDeg - results[index].yDeg
+        const squared = dx * dx + dy * dy
+        squaredDistances[index] = squared
+        const weight = Math.exp(-squared / twoGapSigmaSquared)
+        weightedGap += nearestGapDeg[index] * weight
+        gapWeight += weight
+      }
+
+      const smoothingDeg = Math.max(
+        (weightedGap / gapWeight) * SMOOTHING_FACTOR,
+        0.5,
+      )
+      const twoSigmaSquared = 2 * smoothingDeg * smoothingDeg
+
       let weightedValue = 0
       let totalWeight = 0
-      for (const result of results) {
-        const dx = xDeg - result.xDeg
-        const dy = yDeg - result.yDeg
-        const weight = Math.exp(-(dx * dx + dy * dy) / twoSigmaSquared)
-        weightedValue += result.radiusDeg * weight
+      for (let index = 0; index < results.length; index += 1) {
+        const weight = Math.exp(-squaredDistances[index] / twoSigmaSquared)
+        weightedValue += results[index].radiusDeg * weight
         totalWeight += weight
       }
 
@@ -163,6 +209,7 @@ function PointResultView({
   onReset,
   onHistory,
 }: Omit<Props, 'results'> & { results: PointResult[] }) {
+  const [showValues, setShowValues] = useState(true)
   const pointMapSize = 560
   const center = pointMapSize / 2
   const outerLocationRadius = Math.max(
@@ -173,7 +220,9 @@ function PointResultView({
   )
   const fieldRadius = Math.max(1, outerLocationRadius + maxDetectedRadius / 2)
   const extent = Math.max(10, fieldRadius)
-  const scale = (center - 35) / extent
+  // 数値ラベルは地点の外側に出るので、そのぶん描画を内側に寄せる
+  const mapMargin = showValues ? 58 : 35
+  const scale = (center - mapMargin) / extent
   const gridInterval = extent <= 25 ? 5 : extent <= 50 ? 10 : 20
   const gridSteps: number[] = []
   for (let deg = gridInterval; deg < extent; deg += gridInterval) {
@@ -211,6 +260,7 @@ function PointResultView({
           ? `${results.length}箇所を各${sampleCount}回測定した平均結果です。`
           : `${results.length}回の測定結果です。`}
         色の濃い赤い場所ほど、気付くまでに大きな刺激が必要だったことを示します。
+        地点に添えた数字は、その場所で気付いた円の半径（度）です。
       </p>
 
       <div className="result-chart point-result-chart">
@@ -265,27 +315,62 @@ function PointResultView({
           <line x1={center} y1={20} x2={center} y2={pointMapSize - 20} stroke="#ddd" />
           <line x1={20} y1={center} x2={pointMapSize - 20} y2={center} stroke="#ddd" />
 
-          {results.map((result, index) => (
-            <circle
-              key={index}
-              cx={center + result.xDeg * scale}
-              cy={center - result.yDeg * scale}
-              r={2.5}
-              fill="#fff"
-              fillOpacity={0.8}
-              stroke="#7d1822"
-              strokeWidth={1}
-            >
-              <title>
-                地点{index + 1}: 位置 ({result.xDeg.toFixed(1)}°,
-                {result.yDeg.toFixed(1)}°)、
-                {result.sampleCount !== undefined && result.sampleCount > 1
-                  ? `${result.sampleCount}回の平均半径`
-                  : '検出半径'}{' '}
-                {result.radiusDeg.toFixed(2)}°
-              </title>
-            </circle>
-          ))}
+          {results.map((result, index) => {
+            const pointX = center + result.xDeg * scale
+            const pointY = center - result.yDeg * scale
+            // ラベルは固視点から見て地点の外側に置き、地点どうしの間隔を稼ぐ
+            const eccentricity = Math.hypot(result.xDeg, result.yDeg)
+            const labelOffset = 12
+            const labelX =
+              eccentricity > 0
+                ? pointX + (result.xDeg / eccentricity) * labelOffset
+                : pointX
+            const labelY =
+              eccentricity > 0
+                ? pointY - (result.yDeg / eccentricity) * labelOffset
+                : pointY - labelOffset
+
+            return (
+              <g key={index}>
+                <circle
+                  cx={pointX}
+                  cy={pointY}
+                  r={2.5}
+                  fill="#fff"
+                  fillOpacity={0.8}
+                  stroke="#7d1822"
+                  strokeWidth={1}
+                >
+                  <title>
+                    地点{index + 1}: 位置 ({result.xDeg.toFixed(1)}°,
+                    {result.yDeg.toFixed(1)}°)、
+                    {result.sampleCount !== undefined && result.sampleCount > 1
+                      ? `${result.sampleCount}回の平均半径`
+                      : '検出半径'}{' '}
+                    {result.radiusDeg.toFixed(2)}°
+                  </title>
+                </circle>
+                {showValues && (
+                  <text
+                    x={labelX}
+                    y={labelY}
+                    fill="#3d0a0f"
+                    fontSize={13}
+                    fontWeight="bold"
+                    textAnchor="middle"
+                    dominantBaseline="central"
+                    stroke="#fff"
+                    strokeWidth={3}
+                    strokeOpacity={0.9}
+                    paintOrder="stroke"
+                    aria-hidden="true"
+                  >
+                    {result.radiusDeg.toFixed(1)}
+                  </text>
+                )}
+              </g>
+            )
+          })}
 
           <text x={center} y={26} fill="#333" fontSize={20} fontWeight="bold" textAnchor="middle">
             上
@@ -303,6 +388,15 @@ function PointResultView({
           <line x1={center - 7} y1={center} x2={center + 7} y2={center} stroke="#d92020" strokeWidth={2} />
           <line x1={center} y1={center - 7} x2={center} y2={center + 7} stroke="#d92020" strokeWidth={2} />
         </svg>
+
+        <label className="value-toggle">
+          <input
+            type="checkbox"
+            checked={showValues}
+            onChange={(event) => setShowValues(event.target.checked)}
+          />
+          各地点の数値（検出半径・度）を表示
+        </label>
 
         <div
           className="heatmap-legend"
