@@ -220,8 +220,9 @@ function PointResultView({
   )
   const fieldRadius = Math.max(1, outerLocationRadius + maxDetectedRadius / 2)
   const extent = Math.max(10, fieldRadius)
-  // 数値ラベルは地点の外側に出るので、そのぶん描画を内側に寄せる
-  const mapMargin = showValues ? 58 : 35
+  // 数値ラベルは地点の外側に出るので、そのぶん描画を内側に寄せる。
+  // 表示切り替えで円の大きさが変わらないよう、余白はラベルの有無によらず一定にする
+  const mapMargin = 58
   const scale = (center - mapMargin) / extent
   const gridInterval = extent <= 25 ? 5 : extent <= 50 ? 10 : 20
   const gridSteps: number[] = []
