@@ -29,7 +29,7 @@ export default function Setup({ onStart, onDemo, onHistory }: Props) {
     <div className="setup">
       <h1>視野マッパー</h1>
       <p className="lead">
-        画面から約20cmの距離で中央の赤い十字を見続けてください。
+        画面から約20cmの距離で中央の赤い丸を見続けてください。
         決められた{MEASUREMENT_LOCATIONS.length}箇所で大きくなる円に気付いたら
         Enter を押します（各{REPETITIONS_PER_LOCATION}回、全{TOTAL_TRIAL_COUNT}回）。
       </p>

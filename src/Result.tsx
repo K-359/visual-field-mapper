@@ -414,8 +414,7 @@ function PointResultView({
             右
           </text>
 
-          <line x1={center - 7} y1={center} x2={center + 7} y2={center} stroke="#d92020" strokeWidth={2} />
-          <line x1={center} y1={center - 7} x2={center} y2={center + 7} stroke="#d92020" strokeWidth={2} />
+          <circle cx={center} cy={center} r={5} fill="#d92020" />
         </svg>
 
         <label className="value-toggle">

@@ -138,26 +138,20 @@ button.primary:hover {
   touch-action: none;
 }
 
-/* 中心の大きな赤い十字（固視点） */
-.fix-cross {
+/*
+ * 中心の大きな赤い丸（固視点）。大きさは視角で決めるので Test.tsx で指定する。
+ * 赤い円が重なっても見失わないよう、円より手前に白い縁付きで描く
+ */
+.fixation-dot {
   position: absolute;
   left: 50%;
   top: 50%;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
   background: #d92020;
+  box-shadow: 0 0 0 3px #fff;
   pointer-events: none;
   z-index: 3;
-}
-
-.fix-cross.horizontal {
-  width: 56px;
-  height: 6px;
-  transform: translate(-50%, -50%);
-}
-
-.fix-cross.vertical {
-  width: 6px;
-  height: 56px;
-  transform: translate(-50%, -50%);
 }
 
 .circle-target {
@@ -168,6 +162,27 @@ button.primary:hover {
   user-select: none;
   pointer-events: none;
   z-index: 2;
+}
+
+/* 画面が小さすぎて測定できないときの案内 */
+.test-too-small {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(90vw, 36em);
+  padding: 1em 1.2em;
+  border: 3px solid #1a1a1a;
+  border-radius: 8px;
+  background: #fff;
+  color: #1a1a1a;
+  font-size: 1.1rem;
+  line-height: 1.6;
+  z-index: 4;
+}
+
+.test-too-small p {
+  margin: 0.3em 0;
 }
 
 .test-hud {

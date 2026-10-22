@@ -6,23 +6,27 @@ import History from './History'
 import type { MeasurementResult, Phase, PointResult, Settings } from './types'
 import { addRecord } from './historyStore'
 import {
+  MAX_STIMULUS_RADIUS_DEG,
   MEASUREMENT_LOCATIONS,
   REPETITIONS_PER_LOCATION,
 } from './measurementPlan'
 
 /** 固定地点測定の結果画面を確認するためのサンプルデータ */
 function demoResults(): PointResult[] {
-  const outerRadiusDeg = 18
   return MEASUREMENT_LOCATIONS.map((location) => {
-    const distanceFromCenter = location.radiusRatio * outerRadiusDeg
+    const distanceFromCenter = location.eccentricityDeg
     return {
       xDeg: Math.cos(location.angleRad) * distanceFromCenter,
       yDeg: Math.sin(location.angleRad) * distanceFromCenter,
       radiusDeg: Math.max(
         0.2,
-        Math.min(5, 2.8 - distanceFromCenter * 0.12 + Math.random() * 0.8),
+        Math.min(
+          MAX_STIMULUS_RADIUS_DEG,
+          2.8 - distanceFromCenter * 0.2 + Math.random() * 0.8,
+        ),
       ),
       sampleCount: REPETITIONS_PER_LOCATION,
+      maxRadiusDeg: MAX_STIMULUS_RADIUS_DEG,
     }
   })
 }
