@@ -53,6 +53,10 @@ const SMOOTHING_FACTOR = 0.5
  *   平滑化幅が跳んで、地図に不自然な境界が出る）
  */
 const GAP_SMOOTHING_DIVISOR = 4
+/** 最外周の地点から外側へ、色を透過させていく縁の幅（最外周の半径に対する比） */
+const EDGE_FADE_RATIO = 0.08
+/** 地点の同心円がこの数以下なら、点線を同心円に重ねる */
+const MAX_RING_GUIDES = 6
 
 type Rgba = [number, number, number, number]
 
@@ -75,10 +79,12 @@ function heatmapColor(value: number): Rgba {
  * 各地点の近くほどその地点の値が強く反映される。
  * 測定地点は中心ほど密・外周ほど粗いので、平滑化幅は一定にせず
  * その場所に最も近い地点の間隔に合わせる。
+ * 最外周の地点（fadeStartDeg）までは不透明に塗り、その外側だけを透過させる。
  */
 function createHeatmapDataUrl(
   results: PointResult[],
   fieldRadiusDeg: number,
+  fadeStartDeg: number,
 ): string {
   const canvas = document.createElement('canvas')
   canvas.width = HEATMAP_RESOLUTION
@@ -107,6 +113,7 @@ function createHeatmapDataUrl(
     })
     return Number.isFinite(smallest) ? smallest : fieldRadiusDeg
   })
+  const fadeWidthDeg = Math.max(fieldRadiusDeg - fadeStartDeg, 0.001)
   const squaredDistances = new Float64Array(results.length)
   const gapSmoothingDeg = Math.max(fieldRadiusDeg / GAP_SMOOTHING_DIVISOR, 1)
   const twoGapSigmaSquared = 2 * gapSmoothingDeg * gapSmoothingDeg
@@ -152,10 +159,10 @@ function createHeatmapDataUrl(
       const normalized =
         valueRange > 0 ? (interpolated - minRadius) / valueRange : 0.5
       const color = heatmapColor(Math.max(0, Math.min(1, normalized)))
-      // 円周の外側8%を滑らかに透過させる。
+      // 最外周の地点より外側を滑らかに透過させる
       const edgeOpacity = Math.min(
         1,
-        Math.max(0, (1 - distanceFromCenter / fieldRadiusDeg) / 0.08),
+        Math.max(0, (fieldRadiusDeg - distanceFromCenter) / fadeWidthDeg),
       )
       const dataIndex = (pixelY * HEATMAP_RESOLUTION + pixelX) * 4
       image.data[dataIndex] = color[0]
@@ -218,15 +225,36 @@ function PointResultView({
   const maxDetectedRadius = Math.max(
     ...results.map((result) => result.radiusDeg),
   )
-  const fieldRadius = Math.max(1, outerLocationRadius + maxDetectedRadius / 2)
+  // 最外周の地点の外側に、透過させるための縁を設ける
+  const fieldRadius = Math.max(
+    1,
+    outerLocationRadius +
+      Math.max(maxDetectedRadius / 2, outerLocationRadius * EDGE_FADE_RATIO),
+  )
   const extent = Math.max(10, fieldRadius)
-  // 数値ラベルは地点の外側に出るので、そのぶん描画を内側に寄せる
-  const mapMargin = showValues ? 58 : 35
+  // 数値ラベルは地点の外側に出るので、そのぶん描画を内側に寄せる。
+  // 表示切り替えで円の大きさが変わらないよう、余白はラベルの有無によらず一定にする
+  const mapMargin = 42
   const scale = (center - mapMargin) / extent
+  // 測定地点は同心円状に並ぶので、点線はその同心円に重ねる
+  const ringRadii = [
+    ...new Set(
+      results
+        .map((result) => Math.hypot(result.xDeg, result.yDeg))
+        .filter((eccentricity) => eccentricity > 0.01)
+        .map((eccentricity) => Number(eccentricity.toFixed(2))),
+    ),
+  ].sort((a, b) => a - b)
+  // 地点が同心円に並ばない旧形式の結果では、一定間隔の目盛りにする
   const gridInterval = extent <= 25 ? 5 : extent <= 50 ? 10 : 20
+  const isRingGuide = ringRadii.length <= MAX_RING_GUIDES
   const gridSteps: number[] = []
-  for (let deg = gridInterval; deg < extent; deg += gridInterval) {
-    gridSteps.push(deg)
+  if (isRingGuide) {
+    gridSteps.push(...ringRadii)
+  } else {
+    for (let deg = gridInterval; deg < extent; deg += gridInterval) {
+      gridSteps.push(deg)
+    }
   }
 
   const radii = results.map((result) => result.radiusDeg)
@@ -239,8 +267,8 @@ function PointResultView({
     ? results[0].sampleCount
     : undefined
   const heatmapDataUrl = useMemo(
-    () => createHeatmapDataUrl(results, fieldRadius),
-    [fieldRadius, results],
+    () => createHeatmapDataUrl(results, fieldRadius, outerLocationRadius),
+    [fieldRadius, outerLocationRadius, results],
   )
 
   return (
@@ -299,7 +327,8 @@ function PointResultView({
                 stroke="#ccc"
                 strokeDasharray="4 4"
               />
-              {center + deg * scale + 3 < pointMapSize - 60 && (
+              {/* 同心円に重ねた点線には度数を添えない。旧形式の目盛りにだけ付ける */}
+              {!isRingGuide && center + deg * scale + 3 < pointMapSize - 60 && (
                 <text
                   x={center + deg * scale + 3}
                   y={center - 4}
