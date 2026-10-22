@@ -1,7 +1,7 @@
 export interface MeasurementLocation {
   id: string
-  /** 最外周を1とする、固視点からの距離 */
-  radiusRatio: number
+  /** 固視点からの距離（視角、度） */
+  eccentricityDeg: number
   /** 右方向を0とする角度（ラジアン） */
   angleRad: number
 }
@@ -9,31 +9,48 @@ export interface MeasurementLocation {
 export const REPETITIONS_PER_LOCATION = 1
 
 interface RingDefinition {
-  /** 最外周を1とする、固視点からの距離 */
-  radiusRatio: number
+  /** 固視点からの距離（視角、度） */
+  eccentricityDeg: number
   /** そのリングに等間隔で並べる地点数 */
   pointCount: number
 }
 
 /**
- * 中心寄りの感度をより細かく見るため、最内周（1/3）と固視点のちょうど中間に
- * 8方向（東西南北とその間）のリングを追加している
+ * 円が拡大する最大半径（視角、度）。全地点で同じ条件にするため、内側の地点で
+ * 円が固視点に重なっても拡大を止めない（固視点は円の上に白い縁付きで描く）
+ */
+export const MAX_STIMULUS_RADIUS_DEG = 5
+
+/** 中心の固視点（赤い丸）の半径（視角、度） */
+export const FIXATION_DOT_RADIUS_DEG = 0.75
+
+/**
+ * 測定点の配置は視角で固定し、画面の大きさに左右されないようにする
+ * （端末や測定日が違っても同じ網膜上の位置を比べられるようにするため）。
+ * 範囲は中心15°とし、5°刻みに加えて、暗点の内側を見るため2.5°にも
+ * リングを置いている。最内周は8方向（東西南北とその間）、それ以外は16方向。
+ * 片眼の測定では、耳側15°付近の地点が生理的な盲点（マリオット盲点）に重なる。
  */
 export const RINGS: readonly RingDefinition[] = [
-  { radiusRatio: 1 / 6, pointCount: 8 },
-  { radiusRatio: 1 / 3, pointCount: 16 },
-  { radiusRatio: 2 / 3, pointCount: 16 },
-  { radiusRatio: 1, pointCount: 16 },
+  { eccentricityDeg: 2.5, pointCount: 8 },
+  { eccentricityDeg: 5, pointCount: 16 },
+  { eccentricityDeg: 10, pointCount: 16 },
+  { eccentricityDeg: 15, pointCount: 16 },
 ]
+
+/** 円が最大まで広がったときの、固視点から円の端までの最大距離（視角、度） */
+export const REQUIRED_EXTENT_DEG =
+  Math.max(...RINGS.map((ring) => ring.eccentricityDeg)) +
+  MAX_STIMULUS_RADIUS_DEG
 
 /** 同心円ごとに等間隔の方向を配置した固定測定地点 */
 export const MEASUREMENT_LOCATIONS: MeasurementLocation[] = RINGS.flatMap(
-  ({ radiusRatio, pointCount }, ringIndex) => {
+  ({ eccentricityDeg, pointCount }, ringIndex) => {
     const angleStep = (Math.PI * 2) / pointCount
 
     return Array.from({ length: pointCount }, (_, pointIndex) => ({
       id: `ring-${ringIndex + 1}-point-${pointIndex + 1}`,
-      radiusRatio,
+      eccentricityDeg,
       angleRad: pointIndex * angleStep,
     }))
   },

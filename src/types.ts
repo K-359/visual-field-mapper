@@ -30,6 +30,8 @@ export interface PointResult {
   radiusDeg: number
   /** 同じ地点で集約した試行数。旧形式の結果では未設定 */
   sampleCount?: number
+  /** この地点で円が拡大した最大半径（視角、度）。旧形式の結果では未設定 */
+  maxRadiusDeg?: number
 }
 
 /** 現行の点測定と、旧バージョンの方向測定の両方を読める結果型 */
