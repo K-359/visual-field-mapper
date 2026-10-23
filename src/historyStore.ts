@@ -11,8 +11,11 @@ export interface HistoryRecord {
 }
 
 const STORAGE_KEY = 'visual-field-mapper-history'
-/** 古い記録から削除して、この件数までに抑える */
-const MAX_RECORDS = 100
+/**
+ * 古い記録から削除して、この件数までに抑える。1件は約7千文字なので、
+ * localStorage の容量（ブラウザにより約250万〜500万文字）に収まる件数にしている
+ */
+export const MAX_RECORDS = 300
 
 function isRecord(value: unknown): value is HistoryRecord {
   if (typeof value !== 'object' || value === null) return false
