@@ -1,6 +1,9 @@
-export type Phase = 'setup' | 'test' | 'result' | 'history'
+export type Phase = 'setup' | 'calibrate' | 'test' | 'result' | 'history'
 
 export type Eye = 'right' | 'left' | 'both'
+
+/** 目から画面までの距離 (cm)。20cm 固定 */
+export const VIEWING_DISTANCE_CM = 20
 
 export interface Settings {
   /** 目から画面までの距離 (cm) */

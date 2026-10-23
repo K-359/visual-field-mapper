@@ -222,6 +222,15 @@ export default function Test({ settings, onFinish, onCancel }: Props) {
             （必要な大きさ: 横{required.w} × 縦{required.h}px、
             現在: 横{viewport.w} × 縦{viewport.h}px）。
           </p>
+          {document.fullscreenElement === null &&
+            document.documentElement.requestFullscreen !== undefined && (
+              <button
+                type="button"
+                onClick={() => void document.documentElement.requestFullscreen()}
+              >
+                全画面表示にする
+              </button>
+            )}
         </div>
       )}
 
