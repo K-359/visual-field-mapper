@@ -1,29 +1,32 @@
 import { useState } from 'react'
-import type { Eye, Settings } from './types'
+import type { Eye } from './types'
 import { EYE_LABEL } from './types'
 import {
   MEASUREMENT_LOCATIONS,
   REPETITIONS_PER_LOCATION,
   TOTAL_TRIAL_COUNT,
 } from './measurementPlan'
-
-const DISTANCE_CM = 20 // 目から画面までの距離は 20cm 固定
-const PX_PER_MM = 96 / 25.4 // 一般的なディスプレイ (96dpi) を想定
+import type { Calibration } from './calibrationStore'
+import { isCalibrationCurrent } from './calibrationStore'
+import { formatSavedAt } from './historyStore'
 
 interface Props {
-  onStart: (settings: Settings) => void
-  onDemo: (settings: Settings) => void
+  calibration: Calibration | null
+  onStart: (eye: Eye) => void
+  onDemo: (eye: Eye) => void
+  onCalibrate: () => void
   onHistory: () => void
 }
 
-export default function Setup({ onStart, onDemo, onHistory }: Props) {
+export default function Setup({
+  calibration,
+  onStart,
+  onDemo,
+  onCalibrate,
+  onHistory,
+}: Props) {
   const [eye, setEye] = useState<Eye>('right')
-
-  const settings: Settings = {
-    distanceCm: DISTANCE_CM,
-    pxPerMm: PX_PER_MM,
-    eye,
-  }
+  const calibrated = calibration !== null && isCalibrationCurrent(calibration)
 
   return (
     <div className="setup">
@@ -48,11 +51,24 @@ export default function Setup({ onStart, onDemo, onHistory }: Props) {
         ))}
       </div>
 
+      <div className={`calibration-status${calibrated ? '' : ' needed'}`}>
+        <p>
+          {calibrated
+            ? `画面の大きさ: 合わせ済み（${formatSavedAt(calibration.calibratedAt)}）`
+            : calibration !== null
+            ? '画面またはブラウザの表示倍率が変わったため、画面の大きさを合わせ直す必要があります。'
+            : '画面の大きさがまだ合わせられていません。測定をはじめると、最初にカードで合わせます。'}
+        </p>
+        <button onClick={onCalibrate}>
+          {calibrated ? '画面の大きさを合わせ直す' : '画面の大きさを合わせる'}
+        </button>
+      </div>
+
       <div className="button-row">
-        <button className="primary" onClick={() => onStart(settings)}>
+        <button className="primary" onClick={() => onStart(eye)}>
           測定をはじめる
         </button>
-        <button onClick={() => onDemo(settings)}>結果のサンプル</button>
+        <button onClick={() => onDemo(eye)}>結果のサンプル</button>
         <button onClick={onHistory}>測定履歴</button>
       </div>
 
