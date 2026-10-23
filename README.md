@@ -63,7 +63,42 @@ npm run dev
 
 測定が完了すると結果はブラウザのlocalStorageに保存されます（最大300件、
 古いものから削除）。設定画面・結果画面の「測定履歴」から過去の結果の
-表示・削除ができます。履歴は端末のブラウザ内にのみ保存されます。
+表示・削除ができます。
+
+### 書き出し・読み込み（バックアップ）
+
+履歴は端末のブラウザ内にしかないため、ブラウザのデータ消去や端末の変更で
+失われることがあります。測定履歴の画面で、記録をJSONファイルとして
+書き出せます。
+
+- **すべて書き出す** — 全件を1つのファイルにまとめます
+  （`visual-field-history-YYYYMMDD-HHMM.json`）。
+- 各記録の **書き出す** — その1件だけを書き出します
+  （`visual-field-YYYYMMDD-HHMM-right.json` など。日時は測定日時）。
+- **ファイルから読み込む** — 書き出したファイルを履歴に戻します。
+  すでに履歴にある記録（同じID）は二重に追加しません。形式が正しくない
+  記録は読み込みません。読み込むと300件を超える場合は、古い記録が
+  削除されることを確認してから読み込みます。
+
+読み込んだ記録は通常の履歴と同じく「表示」で結果マップを見られます。
+
+ファイルの形式:
+
+```json
+{
+  "format": "visual-field-mapper-history",
+  "version": 1,
+  "exportedAt": "2026-10-23T05:30:00.000Z",
+  "records": [
+    {
+      "id": "…",
+      "savedAt": "…",
+      "settings": { "distanceCm": 20, "pxPerMm": 3.78, "eye": "right" },
+      "results": [{ "xDeg": 2.5, "yDeg": 0, "radiusDeg": 1.2, "sampleCount": 1, "maxRadiusDeg": 5 }]
+    }
+  ]
+}
+```
 
 ## 技術構成
 
@@ -82,5 +117,5 @@ npm run dev
 | `src/measurementPlan.ts` | 視角で固定した4つの同心円上の56地点と、試行の順序生成 |
 | `src/Test.tsx` | 測定画面（56個の固定地点をランダム順に表示） |
 | `src/Result.tsx` | 結果画面（56地点の測定値をグラデーション表示） |
-| `src/History.tsx` | 測定履歴の一覧・削除画面 |
-| `src/historyStore.ts` | 履歴のlocalStorage保存・読み込み |
+| `src/History.tsx` | 測定履歴の一覧・削除・書き出し・読み込み画面 |
+| `src/historyStore.ts` | 履歴のlocalStorage保存・読み込み、JSONファイルの作成・検証 |
