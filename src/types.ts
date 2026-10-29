@@ -1,4 +1,10 @@
-export type Phase = 'setup' | 'calibrate' | 'test' | 'result' | 'history'
+export type Phase =
+  | 'setup'
+  | 'calibrate'
+  | 'test'
+  | 'result'
+  | 'history'
+  | 'simulate'
 
 export type Eye = 'right' | 'left' | 'both'
 

@@ -502,3 +502,357 @@ button.danger:hover {
   justify-content: center;
   margin-top: 1.5rem;
 }
+
+/* ---- 見え方の体験 ---- */
+
+.simulation {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+/* 体験する人も操作するので、操作部分はほかの画面と同じく大きく保つ */
+.simulation-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1.2rem;
+  padding: 0.6rem 1rem;
+  border-bottom: 3px solid #111;
+  background: #fff;
+}
+
+.simulation-toolbar label {
+  display: flex;
+  align-items: center;
+  gap: 0.4em;
+  font-weight: bold;
+}
+
+.simulation-toolbar select {
+  font-size: 1rem;
+  min-height: 2.2em;
+  padding: 0 0.4em;
+  border: 2px solid #767676;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.simulation-intensity {
+  display: inline-block;
+  min-width: 5ch;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.simulation-toolbar input[type='range'] {
+  width: 9em;
+  accent-color: #1a4fc4;
+}
+
+.simulation-hint {
+  flex-basis: 100%;
+  margin: 0;
+  font-size: 1rem;
+  line-height: 1.6;
+  color: #333;
+}
+
+.simulation-stage {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.simulation-scene {
+  height: 100%;
+}
+
+.simulation-lens {
+  position: absolute;
+  top: 0;
+  left: 0;
+  visibility: hidden;
+  pointer-events: none;
+  will-change: transform;
+}
+
+.simulation-layer {
+  position: absolute;
+  inset: 0;
+  mask-size: 100% 100%;
+  -webkit-mask-size: 100% 100%;
+  mask-repeat: no-repeat;
+  -webkit-mask-repeat: no-repeat;
+}
+
+/* 以下は実際のアプリに似せた画面。見え方を体験するため、文字の大きさは
+   アプリ本来の大きさ（px 指定）にしている */
+
+.scene-code,
+.scene-document {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  font-family: system-ui, -apple-system, 'Segoe UI', 'Hiragino Sans', sans-serif;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.scene-code {
+  background: #1e1e1e;
+  color: #ccc;
+}
+
+.code-titlebar {
+  background: #3c3c3c;
+  color: #ccc;
+  text-align: center;
+  padding: 6px;
+  font-size: 12px;
+}
+
+.code-body {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+.code-activitybar {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  align-items: center;
+  width: 48px;
+  padding-top: 12px;
+  background: #333;
+  color: #858585;
+  font-size: 22px;
+}
+
+.code-sidebar {
+  width: 230px;
+  background: #252526;
+  padding-bottom: 8px;
+}
+
+.code-sidebar-title {
+  padding: 10px 20px;
+  font-size: 11px;
+  letter-spacing: 0.05em;
+}
+
+.code-sidebar-section {
+  padding: 2px 12px;
+  font-size: 11px;
+  font-weight: bold;
+}
+
+.code-file {
+  padding: 2px 12px;
+  white-space: nowrap;
+}
+
+.code-file.active {
+  background: #37373d;
+  color: #fff;
+}
+
+.code-main {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+}
+
+.code-tabs {
+  display: flex;
+  background: #252526;
+}
+
+.code-tab {
+  padding: 8px 16px;
+  background: #2d2d2d;
+  color: #969696;
+  border-right: 1px solid #252526;
+}
+
+.code-tab.active {
+  background: #1e1e1e;
+  color: #fff;
+}
+
+.code-breadcrumb {
+  padding: 3px 16px;
+  color: #a9a9a9;
+  font-size: 12px;
+}
+
+.code-editor {
+  flex: 1;
+  overflow: auto;
+  padding: 4px 0;
+  font-family: Menlo, Consolas, 'Courier New', monospace;
+  font-size: 13px;
+  line-height: 19px;
+  white-space: pre;
+}
+
+.code-line-number {
+  display: inline-block;
+  width: 56px;
+  padding-right: 20px;
+  text-align: right;
+  color: #858585;
+}
+
+.code-text {
+  color: #d4d4d4;
+}
+
+.tok-keyword { color: #c586c0; }
+.tok-type { color: #4ec9b0; }
+.tok-function { color: #dcdcaa; }
+.tok-string { color: #ce9178; }
+.tok-number { color: #b5cea8; }
+.tok-comment { color: #6a9955; }
+.tok-constant { color: #4fc1ff; }
+
+.code-statusbar,
+.doc-statusbar {
+  display: flex;
+  justify-content: space-between;
+  padding: 3px 12px;
+  font-size: 12px;
+}
+
+.code-statusbar {
+  background: #007acc;
+  color: #fff;
+}
+
+.scene-document {
+  background: #f3f3f3;
+  color: #222;
+}
+
+.doc-titlebar {
+  background: #185abd;
+  color: #fff;
+  text-align: center;
+  padding: 7px;
+  font-size: 12px;
+}
+
+.doc-ribbon-tabs {
+  display: flex;
+  gap: 18px;
+  padding: 6px 14px 0;
+  background: #fff;
+}
+
+.doc-ribbon-tabs span {
+  padding: 4px 2px;
+}
+
+.doc-ribbon-tabs .active {
+  color: #185abd;
+  border-bottom: 3px solid #185abd;
+  font-weight: bold;
+}
+
+.doc-ribbon {
+  display: flex;
+  gap: 4px;
+  padding: 6px 10px;
+  background: #fff;
+  border-bottom: 1px solid #d6d6d6;
+}
+
+.doc-ribbon-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0 12px;
+  border-right: 1px solid #e1e1e1;
+}
+
+.doc-ribbon-items {
+  display: flex;
+  gap: 6px;
+}
+
+.doc-ribbon-items span {
+  padding: 4px 6px;
+  border: 1px solid #e1e1e1;
+  border-radius: 3px;
+}
+
+.doc-ribbon-label {
+  margin-top: 4px;
+  color: #666;
+  font-size: 11px;
+}
+
+.doc-canvas {
+  flex: 1;
+  overflow: auto;
+  padding: 24px;
+}
+
+.doc-page {
+  width: 794px;
+  max-width: 100%;
+  margin: 0 auto;
+  background: #fff;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
+  font-family: 'Yu Mincho', 'Hiragino Mincho ProN', serif;
+  font-size: 14px;
+  line-height: 1.75;
+  outline: none;
+}
+
+.doc-page p {
+  margin: 0 0 0.6em;
+}
+
+.doc-page h1 {
+  margin: 1.2em 0 1em;
+  font-size: 20px;
+  text-align: center;
+}
+
+.doc-date,
+.doc-from,
+.doc-right {
+  text-align: right;
+}
+
+.doc-center {
+  text-align: center;
+}
+
+.doc-page table {
+  width: 100%;
+  margin: 0.6em 0 1em;
+  border-collapse: collapse;
+}
+
+.doc-page th,
+.doc-page td {
+  padding: 4px 10px;
+  border: 1px solid #555;
+  text-align: left;
+}
+
+.doc-page th {
+  width: 7em;
+  background: #f2f2f2;
+}
+
+.doc-statusbar {
+  background: #f3f3f3;
+  color: #444;
+  border-top: 1px solid #d6d6d6;
+}
