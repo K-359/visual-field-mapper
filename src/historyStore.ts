@@ -1,5 +1,5 @@
 import type { MeasurementResult, Settings } from './types'
-import { EYE_LABEL, isPointResult } from './types'
+import { EYE_LABEL, STIMULUS_LABEL, isPointResult } from './types'
 
 /** 保存される 1 回ぶんの測定記録 */
 export interface HistoryRecord {
@@ -132,7 +132,8 @@ function isValidResult(value: unknown): value is MeasurementResult {
       isFiniteNumber(r.yDeg) &&
       isFiniteNumber(r.radiusDeg) &&
       isOptionalNumber(r.sampleCount) &&
-      isOptionalNumber(r.maxRadiusDeg)
+      isOptionalNumber(r.maxRadiusDeg) &&
+      isOptionalNumber(r.wrongCount)
     )
   }
   return (
@@ -157,6 +158,9 @@ function isValidRecord(value: unknown): value is HistoryRecord {
     settings.pxPerMm > 0 &&
     typeof settings.eye === 'string' &&
     Object.hasOwn(EYE_LABEL, settings.eye) &&
+    (settings.stimulus === undefined ||
+      (typeof settings.stimulus === 'string' &&
+        Object.hasOwn(STIMULUS_LABEL, settings.stimulus))) &&
     value.results.length > 0 &&
     value.results.every(isValidResult)
   )
@@ -242,7 +246,7 @@ export function averageBoundaryDeg(results: MeasurementResult[]): number | null 
   )
 }
 
-/** 新方式の各点で、円に気付いた半径の平均 */
+/** 新方式の各点で、応答した時点の刺激の半径の平均 */
 export function averageRadiusDeg(results: MeasurementResult[]): number | null {
   const points = results.filter(isPointResult)
   if (points.length === 0) return null

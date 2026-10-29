@@ -16,7 +16,13 @@ import {
   recordFileName,
   saveImportedHistory,
 } from './historyStore'
-import { EYE_LABEL, isPointResult } from './types'
+import {
+  EYE_LABEL,
+  STIMULUS_LABEL,
+  STIMULUS_RADIUS_NAME,
+  isPointResult,
+  stimulusOf,
+} from './types'
 
 interface Message {
   text: string
@@ -153,11 +159,11 @@ export default function History({ onView, onSimulate, onBack }: Props) {
                   <div className="detail">
                     {EYE_LABEL[r.settings.eye]} ／{' '}
                     {avgRadius !== null
-                      ? `${r.results.length}箇所${
+                      ? `${STIMULUS_LABEL[stimulusOf(r.settings)]} ／ ${r.results.length}箇所${
                           repeatCount !== undefined
                             ? `（各${repeatCount}回）`
                             : ''
-                        } ／ 平均検出半径 約 ${avgRadius.toFixed(2)}°`
+                        } ／ 平均${STIMULUS_RADIUS_NAME[stimulusOf(r.settings)]} 約 ${avgRadius.toFixed(2)}°`
                       : avg !== null
                       ? `平均境界 約 ${avg.toFixed(1)}°`
                       : '範囲内では応答なし'}

@@ -11,6 +11,8 @@ import {
   TOTAL_TRIAL_COUNT,
 } from './measurementPlan'
 import type { MeasurementLocation } from './measurementPlan'
+import LandoltRing from './LandoltRing'
+import { ARROW_KEY_DIRECTION, randomGapDirection } from './landolt'
 
 interface Props {
   settings: Settings
@@ -43,7 +45,7 @@ const HUD_RESERVED_PX = 100
 
 const round2 = (value: number) => Math.round(value * 100) / 100
 
-/** 最外周の円が最大まで広がっても欠けずに収まる、最小の画面サイズ（px） */
+/** 最外周の環が最大まで広がっても欠けずに収まる、最小の画面サイズ（px） */
 function requiredViewport(ppd: number): Viewport {
   const extentPx = Math.ceil(REQUIRED_EXTENT_DEG * ppd)
   return {
@@ -90,6 +92,7 @@ function averageLocationResults(results: TrialResult[]): PointResult[] {
       radiusDeg: round2(average('radiusDeg')),
       sampleCount: samples.length,
       maxRadiusDeg: MAX_STIMULUS_RADIUS_DEG,
+      wrongCount: samples.reduce((sum, sample) => sum + (sample.wrongCount ?? 0), 0),
     }
   })
 }
@@ -108,6 +111,9 @@ export default function Test({ settings, onFinish, onCancel }: Props) {
     [activeIndex, ppd, trialPlan, viewport],
   )
   const [radiusDeg, setRadiusDeg] = useState(0)
+  const [gapDirection, setGapDirection] = useState(() => randomGapDirection())
+  // この地点で、正しく答えるまでに違う向きを答えた回数
+  const wrongCountRef = useRef(0)
   const startTimeRef = useRef(performance.now())
   const radiusRef = useRef(0)
   const resultsRef = useRef<TrialResult[]>([])
@@ -118,6 +124,7 @@ export default function Test({ settings, onFinish, onCancel }: Props) {
     if (!fits) return
     startTimeRef.current = performance.now()
     radiusRef.current = 0
+    wrongCountRef.current = 0
     setRadiusDeg(0)
   }, [fits])
 
@@ -153,12 +160,13 @@ export default function Test({ settings, onFinish, onCancel }: Props) {
   }, [])
 
   useEffect(() => {
-    const confirmActiveCircle = () => {
+    const confirmActiveRing = () => {
       const result: TrialResult = {
         locationId: activePoint.locationId,
         xDeg: round2(activePoint.xDeg),
         yDeg: round2(activePoint.yDeg),
         radiusDeg: round2(radiusRef.current),
+        wrongCount: wrongCountRef.current,
       }
       const updated = [...resultsRef.current, result]
       resultsRef.current = updated
@@ -166,10 +174,12 @@ export default function Test({ settings, onFinish, onCancel }: Props) {
       if (updated.length === TOTAL_TRIAL_COUNT) {
         onFinish(averageLocationResults(updated))
       } else {
-        // Enter の処理中に時計をリセットし、次の円の拡大を直ちに開始する。
+        // 答えの処理中に時計をリセットし、次の環の拡大を直ちに開始する。
         startTimeRef.current = performance.now()
         radiusRef.current = 0
+        wrongCountRef.current = 0
         setRadiusDeg(0)
+        setGapDirection(randomGapDirection())
         setActiveIndex(updated.length)
       }
     }
@@ -177,15 +187,32 @@ export default function Test({ settings, onFinish, onCancel }: Props) {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         onCancel()
-      } else if (e.key === 'Enter' && !e.repeat && fits) {
-        e.preventDefault()
-        confirmActiveCircle()
+        return
+      }
+      const answer = ARROW_KEY_DIRECTION[e.key]
+      if (answer === undefined) return
+      // 矢印キーで画面がスクロールしないようにする
+      e.preventDefault()
+      // 押しっぱなしの連続入力は答えとして扱わない
+      if (e.repeat || !fits) return
+
+      const correct = answer === gapDirection
+      if (!correct) wrongCountRef.current += 1
+      // 正しい向きを答えたときだけ、その大きさで分かったとみなす。
+      // 最大の大きさでも分からない場所で先へ進めるよう、最大に達した後は
+      // どの向きでも次へ進む（記録は最大の半径になる）
+      if (correct || radiusRef.current >= MAX_STIMULUS_RADIUS_DEG) {
+        confirmActiveRing()
+      } else {
+        // 違う向きを答えたら、環は大きくし続けたまま切れ目の向きを変える
+        // （順に押して当てることができないようにする）
+        setGapDirection(randomGapDirection(gapDirection))
       }
     }
 
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [activePoint, fits, onCancel, onFinish])
+  }, [activePoint, fits, gapDirection, onCancel, onFinish])
 
   const diameterPx = radiusDeg * ppd * 2
   const reachedMax = radiusDeg >= MAX_STIMULUS_RADIUS_DEG
@@ -202,17 +229,13 @@ export default function Test({ settings, onFinish, onCancel }: Props) {
       />
 
       {fits ? (
-        <div
+        <LandoltRing
           key={activeIndex}
-          className="circle-target"
-          style={{
-            left: activePoint.x,
-            top: activePoint.y,
-            width: diameterPx,
-            height: diameterPx,
-          }}
-          role="img"
-          aria-label="大きくなる赤い円"
+          className="landolt-target"
+          style={{ left: activePoint.x, top: activePoint.y }}
+          diameterPx={diameterPx}
+          direction={gapDirection}
+          label="大きくなるランドルト環"
         />
       ) : (
         <div className="test-too-small" role="alert">
@@ -239,8 +262,10 @@ export default function Test({ settings, onFinish, onCancel }: Props) {
           {activeIndex + 1} / {TOTAL_TRIAL_COUNT} 回目
         </span>
         <span>
-          {reachedMax ? '最大サイズです　' : ''}
-          円に気付いたら Enter　各地点{REPETITIONS_PER_LOCATION}回　Esc 中止
+          {reachedMax
+            ? '最大サイズです（どの矢印キーでも次へ進みます）　'
+            : '切れ目の向きを矢印キー（↑ ↓ ← →）で答える　'}
+          各地点{REPETITIONS_PER_LOCATION}回　Esc 中止
         </span>
         <button type="button" onClick={onCancel}>
           測定を中止

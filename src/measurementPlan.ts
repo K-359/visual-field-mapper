@@ -16,8 +16,9 @@ interface RingDefinition {
 }
 
 /**
- * 円が拡大する最大半径（視角、度）。全地点で同じ条件にするため、内側の地点で
- * 円が固視点に重なっても拡大を止めない（固視点は円の上に白い縁付きで描く）
+ * ランドルト環が拡大する最大の外側の半径（視角、度）。全地点で同じ条件に
+ * するため、内側の地点で環が固視点に重なっても拡大を止めない
+ * （固視点は環の上に白い縁付きで描く）
  */
 export const MAX_STIMULUS_RADIUS_DEG = 5
 
@@ -38,7 +39,7 @@ export const RINGS: readonly RingDefinition[] = [
   { eccentricityDeg: 15, pointCount: 16 },
 ]
 
-/** 円が最大まで広がったときの、固視点から円の端までの最大距離（視角、度） */
+/** 環が最大まで広がったときの、固視点から環の端までの最大距離（視角、度） */
 export const REQUIRED_EXTENT_DEG =
   Math.max(...RINGS.map((ring) => ring.eccentricityDeg)) +
   MAX_STIMULUS_RADIUS_DEG

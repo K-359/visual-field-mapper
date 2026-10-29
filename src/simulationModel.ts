@@ -2,10 +2,11 @@ import type { Eye, PointResult } from './types'
 import { createFieldInterpolator } from './fieldInterpolation'
 
 /**
- * 見え方の体験では、気付いた円の半径を次のように「見えにくさ」(0〜1) に置き換える。
- * 健常者と LHON 患者の測定記録を 1 件ずつ比べて決めた暫定値で、医学的に
- * 確かめられた換算ではない（健常者は全地点 0.22° 以下、患者は中央値 0.51°・
- * 最大 1.12° だった）。
+ * 見え方の体験では、記録された刺激の半径を次のように「見えにくさ」(0〜1) に置き換える。
+ * 赤い円の方式で、健常者と LHON 患者の測定記録を 1 件ずつ比べて決めた暫定値で、
+ * 医学的に確かめられた換算ではない（健常者は全地点 0.22° 以下、患者は中央値 0.51°・
+ * 最大 1.12° だった）。ランドルト環の記録にも同じ換算を使っているが、切れ目が
+ * 分かる大きさは円に気付く大きさより大きくなるため、ランドルト環の記録で見直す必要がある。
  *
  * - 半径がこの値以下なら、見えにくさ 0（健常とみなす）
  */
@@ -68,7 +69,7 @@ function excludeBlindSpot(results: PointResult[], eye: Eye): PointResult[] {
   return remaining.length > 0 ? remaining : results
 }
 
-/** 気付いた円の半径を見えにくさ (0〜1) に直す */
+/** 記録された刺激の半径を見えにくさ (0〜1) に直す */
 function severityOf(radiusDeg: number): number {
   const value =
     (radiusDeg - NORMAL_RADIUS_DEG) /
