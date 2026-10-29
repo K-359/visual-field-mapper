@@ -82,6 +82,20 @@ button.primary:hover {
   font-size: 1.1rem;
 }
 
+/* 設定画面で、測定に出るランドルト環の見本を示す */
+.landolt-example {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin: 0 0 1.5rem;
+  font-size: 1.1rem;
+  font-weight: bold;
+}
+
+.landolt-example svg {
+  fill: #000;
+}
+
 .warn {
   background: #fff6e5;
   border: 2px solid #b8860b;
@@ -226,7 +240,7 @@ button.primary:hover {
 
 /*
  * 中心の大きな赤い丸（固視点）。大きさは視角で決めるので Test.tsx で指定する。
- * 赤い円が重なっても見失わないよう、円より手前に白い縁付きで描く
+ * ランドルト環が重なっても見失わないよう、環より手前に白い縁付きで描く
  */
 .fixation-dot {
   position: absolute;
@@ -240,11 +254,12 @@ button.primary:hover {
   z-index: 3;
 }
 
-.circle-target {
+/* 測定の刺激（ランドルト環）。白地で最もはっきり見えるよう黒で描く */
+.landolt-target {
   position: absolute;
   transform: translate(-50%, -50%);
-  border-radius: 50%;
-  background: #d92020;
+  overflow: visible;
+  fill: #000;
   user-select: none;
   pointer-events: none;
   z-index: 2;

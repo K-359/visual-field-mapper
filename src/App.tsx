@@ -58,6 +58,7 @@ export default function App() {
     distanceCm: VIEWING_DISTANCE_CM,
     pxPerMm,
     eye,
+    stimulus: 'landolt',
   })
 
   /** 今の画面に合った校正値で測定を始める。合っていなければ先に画面の大きさを合わせる */

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import type { Eye } from './types'
 import { EYE_LABEL } from './types'
+import LandoltRing from './LandoltRing'
 import {
   MEASUREMENT_LOCATIONS,
   REPETITIONS_PER_LOCATION,
@@ -33,9 +34,17 @@ export default function Setup({
       <h1>視野マッパー</h1>
       <p className="lead">
         画面から約20cmの距離で中央の赤い丸を見続けてください。
-        決められた{MEASUREMENT_LOCATIONS.length}箇所で大きくなる円に気付いたら
-        Enter を押します（各{REPETITIONS_PER_LOCATION}回、全{TOTAL_TRIAL_COUNT}回）。
+        決められた{MEASUREMENT_LOCATIONS.length}箇所に、だんだん大きくなる黒い輪
+        （ランドルト環）が出ます。輪の切れ目の向きが分かったら、その向きの矢印キー
+        （↑ ↓ ← →）を押します（各{REPETITIONS_PER_LOCATION}回、全{TOTAL_TRIAL_COUNT}回）。
+        違う向きを押したときは、輪は大きくなり続け、切れ目の向きが変わります。
+        正しい向きを押すと次の場所へ進みます。
       </p>
+
+      <figure className="landolt-example">
+        <LandoltRing diameterPx={72} direction="right" label="切れ目が右のランドルト環" />
+        <figcaption>切れ目が右なら → キー</figcaption>
+      </figure>
 
       <div className="eye-select">
         {(['right', 'left', 'both'] as Eye[]).map((e) => (
