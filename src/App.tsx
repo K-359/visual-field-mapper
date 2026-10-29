@@ -4,8 +4,9 @@ import Test from './Test'
 import Result from './Result'
 import History from './History'
 import Calibration from './Calibration'
+import Simulation from './Simulation'
 import type { Eye, MeasurementResult, Phase, PointResult, Settings } from './types'
-import { VIEWING_DISTANCE_CM } from './types'
+import { VIEWING_DISTANCE_CM, isPointResult } from './types'
 import { addRecord } from './historyStore'
 import {
   DEFAULT_PX_PER_MM,
@@ -48,6 +49,10 @@ export default function App() {
   const [calibration, setCalibration] = useState(loadCalibration)
   // 画面の大きさを合わせた後に測定する眼。設定画面から合わせるだけのときは null
   const [pendingEye, setPendingEye] = useState<Eye | null>(null)
+
+  // 体験では、測定したときではなく今の画面の大きさを使う
+  const calibrationIsCurrent =
+    calibration !== null && isCalibrationCurrent(calibration)
 
   const settingsFor = (eye: Eye, pxPerMm: number): Settings => ({
     distanceCm: VIEWING_DISTANCE_CM,
@@ -127,6 +132,15 @@ export default function App() {
           onHistory={() => setPhase('history')}
         />
       )}
+      {phase === 'simulate' && settings && (
+        <Simulation
+          results={results.filter(isPointResult)}
+          eye={settings.eye}
+          pxPerMm={calibrationIsCurrent ? calibration.pxPerMm : settings.pxPerMm}
+          isCalibrated={calibrationIsCurrent}
+          onBack={() => setPhase('history')}
+        />
+      )}
       {phase === 'history' && (
         <History
           onView={(record) => {
@@ -134,6 +148,11 @@ export default function App() {
             setResults(record.results)
             setSavedAt(record.savedAt)
             setPhase('result')
+          }}
+          onSimulate={(record) => {
+            setSettings(record.settings)
+            setResults(record.results)
+            setPhase('simulate')
           }}
           onBack={() => setPhase('setup')}
         />

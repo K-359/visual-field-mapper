@@ -36,10 +36,12 @@ function downloadJson(text: string, fileName: string) {
 
 interface Props {
   onView: (record: HistoryRecord) => void
+  /** 記録の見え方を体験する（固定地点の測定結果のみ） */
+  onSimulate: (record: HistoryRecord) => void
   onBack: () => void
 }
 
-export default function History({ onView, onBack }: Props) {
+export default function History({ onView, onSimulate, onBack }: Props) {
   const [records, setRecords] = useState<HistoryRecord[]>(loadHistory)
   const [message, setMessage] = useState<Message | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -164,6 +166,9 @@ export default function History({ onView, onBack }: Props) {
                 <button className="primary" onClick={() => onView(r)}>
                   表示
                 </button>
+                {avgRadius !== null && (
+                  <button onClick={() => onSimulate(r)}>体験する</button>
+                )}
                 <button onClick={() => handleExportOne(r)}>書き出す</button>
                 <button className="danger" onClick={() => handleDelete(r.id)}>
                   削除
