@@ -4,8 +4,15 @@ import type {
   MeasurementResult,
   PointResult,
   Settings,
+  Stimulus,
 } from './types'
-import { dirLabel, EYE_LABEL, isPointResult } from './types'
+import {
+  dirLabel,
+  EYE_LABEL,
+  isPointResult,
+  STIMULUS_RADIUS_NAME,
+  stimulusOf,
+} from './types'
 import { averageBoundaryDeg, formatSavedAt } from './historyStore'
 import { createFieldInterpolator } from './fieldInterpolation'
 
@@ -17,6 +24,29 @@ interface Props {
   onRetry: () => void
   onReset: () => void
   onHistory: () => void
+}
+
+/** 刺激ごとの、結果の読み方の説明 */
+const POINT_RESULT_WORDING: Record<
+  Stimulus,
+  { description: string; small: string; large: string; mapLabel: string }
+> = {
+  landolt: {
+    description:
+      '色の濃い赤い場所ほど、切れ目の向きが分かるまでに大きな環が必要だったことを示します。' +
+      '地点に添えた数字は、その場所で切れ目の向きを正しく答えたときの環の外側の半径（度）です。',
+    small: '小さい環で分かる',
+    large: '大きい環が必要',
+    mapLabel: 'ランドルト環判別マップ',
+  },
+  circle: {
+    description:
+      '色の濃い赤い場所ほど、気付くまでに大きな刺激が必要だったことを示します。' +
+      '地点に添えた数字は、その場所で気付いた円の半径（度）です。',
+    small: '小さい刺激で気付く',
+    large: '大きい刺激が必要',
+    mapLabel: '円検出マップ',
+  },
 }
 
 /** 閉じた Catmull-Rom スプラインを SVG パスに変換する */
@@ -220,6 +250,13 @@ function PointResultView({
     () => createHeatmapDataUrl(results, fieldRadius, outerLocationRadius),
     [fieldRadius, outerLocationRadius, results],
   )
+  const stimulus = stimulusOf(settings)
+  const wording = POINT_RESULT_WORDING[stimulus]
+  const radiusName = STIMULUS_RADIUS_NAME[stimulus]
+  // ランドルト環で、正しく答えるまでに違う向きを答えた回数の合計
+  const wrongTotal = results.some((result) => result.wrongCount !== undefined)
+    ? results.reduce((sum, result) => sum + (result.wrongCount ?? 0), 0)
+    : null
 
   return (
     <div className="result point-result">
@@ -237,8 +274,7 @@ function PointResultView({
           : sampleCount !== undefined
           ? `${results.length}箇所を各${sampleCount}回測定した平均結果です。`
           : `${results.length}回の測定結果です。`}
-        色の濃い赤い場所ほど、気付くまでに大きな刺激が必要だったことを示します。
-        地点に添えた数字は、その場所で気付いた円の半径（度）です。
+        {wording.description}
       </p>
 
       <div className="result-chart point-result-chart">
@@ -246,7 +282,7 @@ function PointResultView({
           viewBox={`0 0 ${pointMapSize} ${pointMapSize}`}
           className="field-map"
           role="img"
-          aria-label={`${results.length}箇所の円検出マップ`}
+          aria-label={`${results.length}箇所の${wording.mapLabel}`}
         >
           <rect
             width={pointMapSize}
@@ -373,28 +409,29 @@ function PointResultView({
             checked={showValues}
             onChange={(event) => setShowValues(event.target.checked)}
           />
-          各地点の数値（検出半径・度）を表示
+          各地点の数値（{radiusName}・度）を表示
         </label>
 
         <div
           className="heatmap-legend"
           role="img"
-          aria-label={`検出半径 ${min.toFixed(2)}度から${max.toFixed(2)}度の色見本`}
+          aria-label={`${radiusName} ${min.toFixed(2)}度から${max.toFixed(2)}度の色見本`}
         >
           <div className="heatmap-legend-bar" />
           <div className="heatmap-legend-labels">
-            <span>小さい刺激で気付く　{min.toFixed(2)}°</span>
-            <span>大きい刺激が必要　{max.toFixed(2)}°</span>
+            <span>{wording.small}　{min.toFixed(2)}°</span>
+            <span>{wording.large}　{max.toFixed(2)}°</span>
           </div>
         </div>
 
         <p className="summary-line">
-          平均検出半径 <strong>{average.toFixed(2)}°</strong>
+          平均{radiusName} <strong>{average.toFixed(2)}°</strong>
         </p>
         <p className="result-stats">
           測定 {results.length}箇所
           {sampleCount !== undefined ? `（各${sampleCount}回）` : ''} ／ 最小{' '}
           {min.toFixed(2)}° ／ 最大 {max.toFixed(2)}°
+          {wrongTotal !== null && ` ／ 違う向きの答え 合計${wrongTotal}回`}
         </p>
       </div>
 

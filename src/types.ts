@@ -11,12 +11,37 @@ export type Eye = 'right' | 'left' | 'both'
 /** 目から画面までの距離 (cm)。20cm 固定 */
 export const VIEWING_DISTANCE_CM = 20
 
+/**
+ * 測定に使った刺激。
+ * - 'landolt': 大きくなるランドルト環の切れ目の向きを矢印キーで答える
+ * - 'circle': 大きくなる赤い円に気付いたら Enter を押す（以前の方式）
+ */
+export type Stimulus = 'landolt' | 'circle'
+
+export const STIMULUS_LABEL: Record<Stimulus, string> = {
+  landolt: 'ランドルト環',
+  circle: '赤い円',
+}
+
+/** 結果の値（応答した時点の刺激の半径）の呼び名 */
+export const STIMULUS_RADIUS_NAME: Record<Stimulus, string> = {
+  landolt: '判別半径',
+  circle: '検出半径',
+}
+
 export interface Settings {
   /** 目から画面までの距離 (cm) */
   distanceCm: number
   /** 画面上の 1mm あたりのピクセル数 */
   pxPerMm: number
   eye: Eye
+  /** 測定に使った刺激。ランドルト環にする前の記録では未設定（赤い円） */
+  stimulus?: Stimulus
+}
+
+/** 記録の刺激。未設定の記録は、ランドルト環にする前の赤い円とみなす */
+export function stimulusOf(settings: Settings): Stimulus {
+  return settings.stimulus ?? 'circle'
 }
 
 /** 1方向ぶんの測定結果 */
@@ -35,12 +60,17 @@ export interface PointResult {
   xDeg: number
   /** 固視点を原点とする垂直方向の位置（視角、度。上が正） */
   yDeg: number
-  /** 円に気付いて Enter を押した時点の半径（視角、度） */
+  /**
+   * 応答した時点の刺激の半径（視角、度）。ランドルト環では切れ目の向きを
+   * 正しく答えた時点の外側の半径、赤い円では気付いて Enter を押した時点の半径
+   */
   radiusDeg: number
   /** 同じ地点で集約した試行数。旧形式の結果では未設定 */
   sampleCount?: number
   /** この地点で円が拡大した最大半径（視角、度）。旧形式の結果では未設定 */
   maxRadiusDeg?: number
+  /** ランドルト環で、正しく答えるまでに違う向きを答えた回数。赤い円では未設定 */
+  wrongCount?: number
 }
 
 /** 現行の点測定と、旧バージョンの方向測定の両方を読める結果型 */
