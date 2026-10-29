@@ -17,7 +17,7 @@ html {
 body {
   background: #fff;
   color: #111;
-  font-family: 'Hiragino Sans', 'Yu Gothic', system-ui, sans-serif;
+  font-family: "Hiragino Sans", "Yu Gothic", system-ui, sans-serif;
   line-height: 1.8;
 }
 
@@ -122,7 +122,7 @@ button.primary:hover {
   background: #e9f0ff;
 }
 
-.eye-select input[type='radio'] {
+.eye-select input[type="radio"] {
   width: 1.2em;
   height: 1.2em;
   accent-color: #1a4fc4;
@@ -336,7 +336,7 @@ button.danger:hover {
   margin: -0.5rem auto 1rem;
 }
 
-.value-toggle input[type='checkbox'] {
+.value-toggle input[type="checkbox"] {
   width: 1.3em;
   height: 1.3em;
   accent-color: #1a4fc4;
@@ -389,4 +389,143 @@ button.danger:hover {
   gap: 1rem;
   justify-content: center;
   margin-top: 1.5rem;
+}
+
+/* ---------------------------------------------------- 見え方シミュレータ */
+
+.simulator {
+  position: relative;
+  min-height: 100vh;
+}
+
+.blur-stack {
+  position: relative;
+}
+/* ビューポートだけを覆う。文書全体を覆うとスクロール長ぶんの面積を持つ */
+.blur-overlay {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 5;
+}
+
+.sim-text {
+  /* すべて em。文字サイズを変えると段組ごと相似に拡大され、1行の字数＝
+     折り返し位置が変わらない。max-width ではなく width なのは、ビューポートに
+     合わせて縮んでしまうと折り返しが変わるため。拡大時は横にはみ出させる */
+  width: 54em;
+  max-width: none;
+  margin: 0 auto;
+  padding: 4em 2em 8em;
+  line-height: 1.9;
+}
+/* 拡大したぶん横にはみ出す。拡大鏡を使うときと同じで、横に振る操作が要る */
+.simulator {
+  overflow-x: auto;
+}
+.sim-text h2 {
+  margin: 0 0 0.8em;
+  font-size: 1.6em;
+}
+.sim-text p {
+  margin: 0 0 0.2em;
+  font-size: 1.15em;
+  text-align: justify;
+}
+
+.sim-panel {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  width: 22rem;
+  max-height: calc(100vh - 2rem);
+  overflow: auto;
+  padding: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.12);
+  font-size: 14px;
+  z-index: 10;
+}
+.sim-panel .note {
+  margin: 0.5rem 0 1rem;
+  font-size: 12px;
+  line-height: 1.6;
+}
+.sim-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+  flex-wrap: wrap;
+}
+.sim-slider {
+  display: block;
+  margin-bottom: 0.75rem;
+}
+.sim-slider span {
+  float: right;
+  font-variant-numeric: tabular-nums;
+  color: #666;
+}
+.sim-slider input[type="range"] {
+  width: 100%;
+  margin-top: 0.25rem;
+}
+.sim-slider small {
+  display: block;
+  color: #777;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.sim-show-ui {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  z-index: 10;
+  opacity: 0.5;
+}
+.sim-show-ui:hover {
+  opacity: 1;
+}
+
+/* 画像モード */
+.sim-image {
+  margin: 2rem auto;
+  /* 拡大時は横にはみ出させる。縮めると倍率の意味が崩れる */
+  max-width: none;
+}
+.sim-image img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.sim-dropzone {
+  max-width: 34em;
+  margin: 6rem auto;
+  padding: 3rem 2rem;
+  border: 2px dashed #bbb;
+  border-radius: 12px;
+  text-align: center;
+  color: #555;
+}
+.sim-dropzone p {
+  margin: 0 0 1rem;
+}
+.sim-dropzone .sim-hint {
+  margin: 1.5rem 0 0;
+  font-size: 13px;
+  color: #777;
+}
+.sim-dropzone .sim-error {
+  margin: 1rem 0 0;
+  color: #c00;
+}
+.sim-row-actions {
+  display: inline-flex;
+  gap: 0.5rem;
 }

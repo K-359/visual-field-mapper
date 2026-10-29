@@ -3,6 +3,7 @@ import Setup from './Setup'
 import Test from './Test'
 import Result from './Result'
 import History from './History'
+import Simulator from './simulator/Simulator'
 import type { MeasurementResult, Phase, PointResult, Settings } from './types'
 import { addRecord } from './historyStore'
 import {
@@ -49,8 +50,10 @@ export default function App() {
             setPhase('result')
           }}
           onHistory={() => setPhase('history')}
+          onSimulator={() => setPhase('simulator')}
         />
       )}
+      {phase === 'simulator' && <Simulator onBack={() => setPhase('setup')} />}
       {phase === 'test' && settings && (
         <Test
           settings={settings}

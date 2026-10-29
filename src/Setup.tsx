@@ -14,9 +14,10 @@ interface Props {
   onStart: (settings: Settings) => void
   onDemo: (settings: Settings) => void
   onHistory: () => void
+  onSimulator: () => void
 }
 
-export default function Setup({ onStart, onDemo, onHistory }: Props) {
+export default function Setup({ onStart, onDemo, onHistory, onSimulator }: Props) {
   const [eye, setEye] = useState<Eye>('right')
 
   const settings: Settings = {
@@ -54,6 +55,7 @@ export default function Setup({ onStart, onDemo, onHistory }: Props) {
         </button>
         <button onClick={() => onDemo(settings)}>結果のサンプル</button>
         <button onClick={onHistory}>測定履歴</button>
+        <button onClick={onSimulator}>見え方を体験する</button>
       </div>
 
       <p className="note">
