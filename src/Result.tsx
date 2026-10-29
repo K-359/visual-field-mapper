@@ -7,6 +7,7 @@ import type {
 } from './types'
 import { dirLabel, EYE_LABEL, isPointResult } from './types'
 import { averageBoundaryDeg, formatSavedAt } from './historyStore'
+import { createFieldInterpolator } from './fieldInterpolation'
 
 interface Props {
   settings: Settings
@@ -40,19 +41,6 @@ function smoothClosedPath(pts: { x: number; y: number }[]): string {
 const SIZE = 480
 const CENTER = SIZE / 2
 const HEATMAP_RESOLUTION = 200
-/**
- * 平滑化幅を、その場所の測定点間隔の何倍にするか。
- * 1.0 に近づけるほど隣の地点と混ざって実測値の高低が潰れ、
- * 小さすぎると地点ごとの水玉模様になる。
- */
-const SMOOTHING_FACTOR = 0.5
-/**
- * 測定点間隔そのものをならすときの幅。地点ごとの間隔をこの幅で平均して
- * 平滑化幅を決めるので、平滑化幅は場所に対して連続に変化する。
- * （最寄りの地点の間隔をそのまま使うと、最寄りが入れ替わる線で
- *   平滑化幅が跳んで、地図に不自然な境界が出る）
- */
-const GAP_SMOOTHING_DIVISOR = 4
 /** 最外周の地点から外側へ、色を透過させていく縁の幅（最外周の半径に対する比） */
 const EDGE_FADE_RATIO = 0.08
 /** 地点の同心円がこの数以下なら、点線を同心円に重ねる */
@@ -75,10 +63,7 @@ function heatmapColor(value: number): Rgba {
 }
 
 /**
- * 測定地点間をガウス重みで補間し、透過PNGのデータURLを作る。
- * 各地点の近くほどその地点の値が強く反映される。
- * 測定地点は中心ほど密・外周ほど粗いので、平滑化幅は一定にせず
- * その場所に最も近い地点の間隔に合わせる。
+ * 測定地点間を補間し、透過PNGのデータURLを作る。
  * 最外周の地点（fadeStartDeg）までは不透明に塗り、その外側だけを透過させる。
  */
 function createHeatmapDataUrl(
@@ -100,23 +85,15 @@ function createHeatmapDataUrl(
   const minRadius = Math.min(...radii)
   const maxRadius = Math.max(...radii)
   const valueRange = maxRadius - minRadius
-
-  // 各地点から最も近い地点までの距離＝その場所での測定の細かさ
-  const nearestGapDeg = results.map((result, index) => {
-    let smallest = Infinity
-    results.forEach((other, otherIndex) => {
-      if (index === otherIndex) return
-      smallest = Math.min(
-        smallest,
-        Math.hypot(result.xDeg - other.xDeg, result.yDeg - other.yDeg),
-      )
-    })
-    return Number.isFinite(smallest) ? smallest : fieldRadiusDeg
-  })
+  const interpolate = createFieldInterpolator(
+    results.map((result) => ({
+      xDeg: result.xDeg,
+      yDeg: result.yDeg,
+      value: result.radiusDeg,
+    })),
+    fieldRadiusDeg,
+  )
   const fadeWidthDeg = Math.max(fieldRadiusDeg - fadeStartDeg, 0.001)
-  const squaredDistances = new Float64Array(results.length)
-  const gapSmoothingDeg = Math.max(fieldRadiusDeg / GAP_SMOOTHING_DIVISOR, 1)
-  const twoGapSigmaSquared = 2 * gapSmoothingDeg * gapSmoothingDeg
 
   for (let pixelY = 0; pixelY < HEATMAP_RESOLUTION; pixelY += 1) {
     const yDeg =
@@ -128,34 +105,7 @@ function createHeatmapDataUrl(
       const distanceFromCenter = Math.hypot(xDeg, yDeg)
       if (distanceFromCenter > fieldRadiusDeg) continue
 
-      // この場所での測定点間隔を、周囲の地点からなだらかに求める
-      let weightedGap = 0
-      let gapWeight = 0
-      for (let index = 0; index < results.length; index += 1) {
-        const dx = xDeg - results[index].xDeg
-        const dy = yDeg - results[index].yDeg
-        const squared = dx * dx + dy * dy
-        squaredDistances[index] = squared
-        const weight = Math.exp(-squared / twoGapSigmaSquared)
-        weightedGap += nearestGapDeg[index] * weight
-        gapWeight += weight
-      }
-
-      const smoothingDeg = Math.max(
-        (weightedGap / gapWeight) * SMOOTHING_FACTOR,
-        0.5,
-      )
-      const twoSigmaSquared = 2 * smoothingDeg * smoothingDeg
-
-      let weightedValue = 0
-      let totalWeight = 0
-      for (let index = 0; index < results.length; index += 1) {
-        const weight = Math.exp(-squaredDistances[index] / twoSigmaSquared)
-        weightedValue += results[index].radiusDeg * weight
-        totalWeight += weight
-      }
-
-      const interpolated = weightedValue / totalWeight
+      const interpolated = interpolate(xDeg, yDeg)
       const normalized =
         valueRange > 0 ? (interpolated - minRadius) / valueRange : 0.5
       const color = heatmapColor(Math.max(0, Math.min(1, normalized)))
