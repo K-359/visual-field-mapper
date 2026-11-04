@@ -584,20 +584,24 @@ button.danger:hover {
   height: 100%;
 }
 
+/*
+ * 効果の層は画面（ステージ）と同じ大きさにし、マスクの位置と大きさを
+ * Simulation.tsx から変数で渡す。マスクの中心がカーソル位置になる
+ */
 .simulation-lens {
   position: absolute;
-  top: 0;
-  left: 0;
+  inset: 0;
   visibility: hidden;
   pointer-events: none;
-  will-change: transform;
 }
 
 .simulation-layer {
   position: absolute;
   inset: 0;
-  mask-size: 100% 100%;
-  -webkit-mask-size: 100% 100%;
+  mask-size: var(--mask-size) var(--mask-size);
+  -webkit-mask-size: var(--mask-size) var(--mask-size);
+  mask-position: var(--mask-x) var(--mask-y);
+  -webkit-mask-position: var(--mask-x) var(--mask-y);
   mask-repeat: no-repeat;
   -webkit-mask-repeat: no-repeat;
 }

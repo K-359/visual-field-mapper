@@ -6,7 +6,7 @@ import History from './History'
 import Calibration from './Calibration'
 import Simulation from './Simulation'
 import type { Eye, MeasurementResult, Phase, PointResult, Settings } from './types'
-import { VIEWING_DISTANCE_CM, isPointResult } from './types'
+import { VIEWING_DISTANCE_CM, isPointResult, stimulusOf } from './types'
 import { addRecord } from './historyStore'
 import {
   DEFAULT_PX_PER_MM,
@@ -137,6 +137,7 @@ export default function App() {
         <Simulation
           results={results.filter(isPointResult)}
           eye={settings.eye}
+          stimulus={stimulusOf(settings)}
           pxPerMm={calibrationIsCurrent ? calibration.pxPerMm : settings.pxPerMm}
           isCalibrated={calibrationIsCurrent}
           onBack={() => setPhase('history')}
