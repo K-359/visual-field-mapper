@@ -1,5 +1,6 @@
 import type { CSSProperties } from 'react'
 import type { GapDirection } from './landolt'
+import { LANDOLT_GAP_PER_OUTER_RADIUS } from './landolt'
 
 /** 右向きの環を回す角度（度、画面上で時計回り） */
 const ROTATION_DEG: Record<GapDirection, number> = {
@@ -16,7 +17,7 @@ const ROTATION_DEG: Record<GapDirection, number> = {
  */
 const OUTER = 1
 const INNER = 0.6
-const HALF_GAP = 0.2
+const HALF_GAP = LANDOLT_GAP_PER_OUTER_RADIUS / 2
 const outerX = Math.sqrt(OUTER ** 2 - HALF_GAP ** 2)
 const innerX = Math.sqrt(INNER ** 2 - HALF_GAP ** 2)
 const RING_PATH =
