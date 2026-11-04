@@ -1,3 +1,9 @@
+/**
+ * ランドルト環の切れ目の幅を、外側の半径の何倍にするか。標準的なランドルト環と
+ * 同じく切れ目の幅は外径の 1/5 なので、外側の半径の 0.4 倍になる
+ */
+export const LANDOLT_GAP_PER_OUTER_RADIUS = 0.4
+
 /** ランドルト環の切れ目の向き */
 export type GapDirection = 'up' | 'down' | 'left' | 'right'
 
