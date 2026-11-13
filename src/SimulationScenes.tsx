@@ -77,115 +77,46 @@ function highlight(line: string) {
   return parts
 }
 
-const EXPLORER_ITEMS = [
-  { name: 'src', depth: 0, folder: true },
-  { name: 'steps.ts', depth: 1, active: true },
-  { name: 'report.ts', depth: 1 },
-  { name: 'utils.ts', depth: 1 },
-  { name: 'steps.csv', depth: 0 },
-  { name: 'package.json', depth: 0 },
-  { name: 'README.md', depth: 0 },
-  { name: 'tsconfig.json', depth: 0 },
-]
-
 interface SceneProps {
   /** 本文（エディタや文書）の拡大率。1 で実際のアプリと同じ大きさ */
   contentZoom: number
 }
 
+/**
+ * コードエディタ風の画面。見え方の体験に必要なのは拡大した本文なので、
+ * エクスプローラーやタブなどは置かず、コードの部分だけのウィンドウにする
+ */
 export function CodeEditorScene({ contentZoom }: SceneProps) {
   return (
     <div className="scene-code">
-      <div className="code-titlebar">steps.ts — walking-log</div>
-      <div className="code-body">
-        <div className="code-activitybar" aria-hidden="true">
-          <span>▤</span>
-          <span>⌕</span>
-          <span>⑂</span>
-          <span>▷</span>
-        </div>
-        <div className="code-sidebar">
-          <div className="code-sidebar-title">エクスプローラー</div>
-          <div className="code-sidebar-section">WALKING-LOG</div>
-          {EXPLORER_ITEMS.map((item) => (
-            <div
-              key={item.name}
-              className={`code-file${item.active ? ' active' : ''}`}
-              style={{ paddingLeft: `${0.8 + item.depth * 1.1}em` }}
-            >
-              {item.folder ? '⌄ ' : ''}
-              {item.name}
-            </div>
-          ))}
-        </div>
-        <div className="code-main">
-          <div className="code-tabs">
-            <div className="code-tab active">steps.ts</div>
-            <div className="code-tab">report.ts</div>
-          </div>
-          <div className="code-breadcrumb">src › steps.ts › countGoalDays</div>
-          <div className="code-editor" style={{ zoom: contentZoom }}>
-            {CODE_LINES.map((line, index) => (
-              <div key={index} className="code-line">
-                <span className="code-line-number">{index + 1}</span>
-                <span className="code-text">
-                  {highlight(line).map((part, partIndex) => (
-                    <span key={partIndex} className={part.className}>
-                      {part.text}
-                    </span>
-                  ))}
+      <div className="code-editor" style={{ zoom: contentZoom }}>
+        {CODE_LINES.map((line, index) => (
+          <div key={index} className="code-line">
+            <span className="code-line-number">{index + 1}</span>
+            <span className="code-text">
+              {highlight(line).map((part, partIndex) => (
+                <span key={partIndex} className={part.className}>
+                  {part.text}
                 </span>
-              </div>
-            ))}
+              ))}
+            </span>
           </div>
-        </div>
-      </div>
-      <div className="code-statusbar">
-        <span>⑂ main</span>
-        <span>行 24、列 7　スペース: 2　UTF-8　LF　TypeScript</span>
+        ))}
       </div>
     </div>
   )
 }
 
-const RIBBON_TABS = [
-  'ファイル', 'ホーム', '挿入', 'デザイン', 'レイアウト', '参考資料', '差し込み文書', '校閲', '表示',
-]
-
-const RIBBON_GROUPS = [
-  { label: 'クリップボード', items: ['貼り付け', '切り取り', 'コピー'] },
-  { label: 'フォント', items: ['游明朝', '10.5', 'B', 'I', 'U'] },
-  { label: '段落', items: ['≡', '☰', '⇥', '⇤'] },
-  { label: 'スタイル', items: ['標準', '見出し 1', '見出し 2', '表題'] },
-  { label: '編集', items: ['検索', '置換'] },
-]
-
 /** 文書ページの余白（拡大前の px）。拡大しても画面上ではこの大きさのままにする */
 const DOC_PAGE_PADDING_PX = { x: 90, y: 72 }
 
+/**
+ * 文書作成ソフト風の画面。エディタ風の画面と同じく、リボンなどは置かず
+ * 本文（文書ページ）の部分だけにする
+ */
 export function DocumentScene({ contentZoom }: SceneProps) {
   return (
     <div className="scene-document">
-      <div className="doc-titlebar">町内清掃活動のお知らせ.docx</div>
-      <div className="doc-ribbon-tabs">
-        {RIBBON_TABS.map((tab) => (
-          <span key={tab} className={tab === 'ホーム' ? 'active' : undefined}>
-            {tab}
-          </span>
-        ))}
-      </div>
-      <div className="doc-ribbon">
-        {RIBBON_GROUPS.map((group) => (
-          <div key={group.label} className="doc-ribbon-group">
-            <div className="doc-ribbon-items">
-              {group.items.map((item) => (
-                <span key={item}>{item}</span>
-              ))}
-            </div>
-            <div className="doc-ribbon-label">{group.label}</div>
-          </div>
-        ))}
-      </div>
       <div className="doc-canvas">
         <div
           className="doc-page"
@@ -239,10 +170,6 @@ export function DocumentScene({ contentZoom }: SceneProps) {
           </ul>
           <p className="doc-right">以上</p>
         </div>
-      </div>
-      <div className="doc-statusbar">
-        <span>1/1 ページ　512 文字　日本語</span>
-        <span>100%</span>
       </div>
     </div>
   )

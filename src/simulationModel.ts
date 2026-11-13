@@ -76,7 +76,7 @@ function circleSeverity(radiusDeg: number): number {
  * 重ねると幅は二乗和の平方根で増えるので、層 k のぼかしは
  * sqrt(S_k² - S_(k-1)²)。必要なぼかしが大きい場所ほど多くの層を効かせる。
  */
-const CUMULATIVE_BLUR_DEG = [0.1, 0.2, 0.4, 0.8, 1.6] as const
+const CUMULATIVE_BLUR_DEG = [0.1, 0.2, 0.4, 0.8, 1.6, 3.2] as const
 
 /**
  * 層ごとの色の薄れ。LHON では見えにくい場所で色も分かりにくくなるため、
@@ -131,8 +131,44 @@ function excludeBlindSpot(results: PointResult[], eye: Eye): PointResult[] {
 export interface SimulationMasks {
   /** マスクが覆う範囲の半径（視角、度）。マスクの中心がカーソル位置になる */
   radiusDeg: number
-  /** 各層のマスク画像（データURL）。SIMULATION_LAYERS と同じ順 */
-  layerUrls: string[]
+  /**
+   * 各層のマスク画像（データURL）。SIMULATION_LAYERS と同じ順。
+   * どこにも効かない層は null にし、描画しない（ぼかしの計算を省くため）
+   */
+  layerUrls: (string | null)[]
+}
+
+/**
+ * 固定のぼかし（測定結果を使わない体験）の設定。
+ * 以前の試作（origin/simulator）と同じく、カーソルの位置が最も強くぼけ、
+ * 外側へ連続的に薄れていく。ぼかしの幅は
+ *   centerBlurDeg × (1 - 距離 / rangeDeg) ^ FIXED_BLUR_CURVE
+ * で、rangeDeg より外側はぼかさない。
+ */
+export interface FixedBlurProfile {
+  /** カーソルの位置でのぼかしの幅（視角、度） */
+  centerBlurDeg: number
+  /** ぼかしが 0 になるまでの、カーソルからの距離（視角、度） */
+  rangeDeg: number
+}
+
+/**
+ * 減り方の形。1 で直線、1 より大きいと中心付近で速く落ちて外側へ長く尾を引く。
+ * 以前の試作の既定値。中心に一定の領域を作ると「一様にぼけた円」に見えるため、
+ * 中心からすぐに薄れ始める形にしている
+ */
+const FIXED_BLUR_CURVE = 1.6
+
+export function fixedBlurDeg(profile: FixedBlurProfile, distanceDeg: number): number {
+  if (distanceDeg >= profile.rangeDeg) return 0
+  return profile.centerBlurDeg * (1 - distanceDeg / profile.rangeDeg) ** FIXED_BLUR_CURVE
+}
+
+/** 固定のぼかしから、各層をどこに効かせるかを表すマスク画像を作る */
+export function createFixedMasks(profile: FixedBlurProfile): SimulationMasks {
+  return createLayerMasks(profile.rangeDeg, (_x, _y, distance) =>
+    fixedBlurDeg(profile, distance),
+  )
 }
 
 /**
@@ -148,7 +184,7 @@ export interface SimulationMasks {
  * coverRadiusDeg は効果をかける範囲の半径（度）で、画面全体を覆う大きさを渡す。
  * 強さ (intensity) はぼかしの幅に掛ける倍率で、1 で測定値どおり。
  */
-export function createSimulationMasks(
+export function createMeasuredMasks(
   results: PointResult[],
   eye: Eye,
   stimulus: Stimulus,
@@ -157,7 +193,6 @@ export function createSimulationMasks(
 ): SimulationMasks {
   const samples = excludeBlindSpot(results, eye)
   const outerDeg = Math.max(...samples.map((r) => Math.hypot(r.xDeg, r.yDeg)))
-  const radiusDeg = Math.max(coverRadiusDeg, outerDeg)
   // ランドルト環では患者さんの目に必要なぼかしの幅、赤い円では見えにくさを補間する
   const interpolate = createFieldInterpolator(
     samples.map((r) => ({
@@ -185,13 +220,25 @@ export function createSimulationMasks(
     return value
   }
   // 体験する人の目に、追加でかけるぼかしの幅（度）
-  const extraBlurDeg = (xDeg: number, yDeg: number, distance: number) => {
-    const value = valueAt(xDeg, yDeg, distance)
-    if (stimulus === 'circle') return value * CIRCLE_FULL_BLUR_DEG * intensity
-    const viewerBlur = blurDegForMarArcmin(normalMarArcmin(distance))
-    return Math.sqrt(Math.max(0, value ** 2 - viewerBlur ** 2)) * intensity
-  }
+  return createLayerMasks(
+    Math.max(coverRadiusDeg, outerDeg),
+    (xDeg, yDeg, distance) => {
+      const value = valueAt(xDeg, yDeg, distance)
+      if (stimulus === 'circle') return value * CIRCLE_FULL_BLUR_DEG * intensity
+      const viewerBlur = blurDegForMarArcmin(normalMarArcmin(distance))
+      return Math.sqrt(Math.max(0, value ** 2 - viewerBlur ** 2)) * intensity
+    },
+  )
+}
 
+/**
+ * マスクの中心からの位置（視角、度）ごとのぼかしの幅 blurAt から、各層の
+ * マスク画像を作る。radiusDeg はマスクが覆う範囲の半径（度）
+ */
+function createLayerMasks(
+  radiusDeg: number,
+  blurAt: (xDeg: number, yDeg: number, distanceDeg: number) => number,
+): SimulationMasks {
   const size = Math.min(
     MAX_MASK_SIZE,
     Math.ceil((radiusDeg * 2) / MIN_MASK_DEG_PER_PIXEL),
@@ -207,6 +254,7 @@ export function createSimulationMasks(
     return { radiusDeg, layerUrls: [] }
   }
   const images = contexts.map((context) => context!.createImageData(size, size))
+  const used = SIMULATION_LAYERS.map(() => false)
 
   for (let pixelY = 0; pixelY < size; pixelY += 1) {
     const yDeg = radiusDeg - ((pixelY + 0.5) / size) * radiusDeg * 2
@@ -215,17 +263,20 @@ export function createSimulationMasks(
       const distance = Math.hypot(xDeg, yDeg)
       if (distance > radiusDeg) continue
 
-      const blur = extraBlurDeg(xDeg, yDeg, distance)
+      const blur = blurAt(xDeg, yDeg, distance)
       const dataIndex = (pixelY * size + pixelX) * 4
       // 必要なぼかしに届くまで内側の層から順に効かせ、最後の層は途中の濃さにする
       images.forEach((image, layer) => {
         const from = layer === 0 ? 0 : CUMULATIVE_BLUR_DEG[layer - 1]
         const to = CUMULATIVE_BLUR_DEG[layer]
-        const alpha = Math.max(0, Math.min(1, (blur - from) / (to - from)))
+        const alpha = Math.round(
+          Math.max(0, Math.min(1, (blur - from) / (to - from))) * 255,
+        )
+        if (alpha > 0) used[layer] = true
         image.data[dataIndex] = 255
         image.data[dataIndex + 1] = 255
         image.data[dataIndex + 2] = 255
-        image.data[dataIndex + 3] = Math.round(alpha * 255)
+        image.data[dataIndex + 3] = alpha
       })
     }
   }
@@ -233,6 +284,7 @@ export function createSimulationMasks(
   return {
     radiusDeg,
     layerUrls: canvases.map((canvas, layer) => {
+      if (!used[layer]) return null
       contexts[layer]!.putImageData(images[layer], 0, 0)
       return canvas.toDataURL('image/png')
     }),

@@ -578,6 +578,8 @@ button.danger:hover {
   flex: 1;
   min-height: 0;
   overflow: hidden;
+  /* OS のカーソルは小さくて見続けにくいため隠し、.simulation-cursor を出す */
+  cursor: none;
 }
 
 .simulation-scene {
@@ -606,6 +608,22 @@ button.danger:hover {
   -webkit-mask-repeat: no-repeat;
 }
 
+/* 体験画面のカーソル。中心が実際のカーソルの位置に来る */
+.simulation-cursor {
+  position: absolute;
+  top: 0;
+  left: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.simulation-cursor path {
+  fill: #fff;
+  stroke: #000;
+  stroke-width: 1;
+  stroke-linejoin: round;
+}
+
 /* 以下は実際のアプリに似せた画面。見え方を体験するため、文字の大きさは
    アプリ本来の大きさ（px 指定）にしている */
 
@@ -624,104 +642,25 @@ button.danger:hover {
   color: #ccc;
 }
 
-.code-titlebar {
-  background: #3c3c3c;
-  color: #ccc;
-  text-align: center;
-  padding: 6px;
-  font-size: 12px;
-}
-
-.code-body {
-  display: flex;
-  flex: 1;
-  min-height: 0;
-}
-
-.code-activitybar {
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
-  align-items: center;
-  width: 48px;
-  padding-top: 12px;
-  background: #333;
-  color: #858585;
-  font-size: 22px;
-}
-
-.code-sidebar {
-  width: 230px;
-  background: #252526;
-  padding-bottom: 8px;
-}
-
-.code-sidebar-title {
-  padding: 10px 20px;
-  font-size: 11px;
-  letter-spacing: 0.05em;
-}
-
-.code-sidebar-section {
-  padding: 2px 12px;
-  font-size: 11px;
-  font-weight: bold;
-}
-
-.code-file {
-  padding: 2px 12px;
-  white-space: nowrap;
-}
-
-.code-file.active {
-  background: #37373d;
-  color: #fff;
-}
-
-.code-main {
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  min-width: 0;
-}
-
-.code-tabs {
-  display: flex;
-  background: #252526;
-}
-
-.code-tab {
-  padding: 8px 16px;
-  background: #2d2d2d;
-  color: #969696;
-  border-right: 1px solid #252526;
-}
-
-.code-tab.active {
-  background: #1e1e1e;
-  color: #fff;
-}
-
-.code-breadcrumb {
-  padding: 3px 16px;
-  color: #a9a9a9;
-  font-size: 12px;
-}
-
 .code-editor {
   flex: 1;
   overflow: auto;
-  padding: 4px 0;
+  padding: 8px 0;
   font-family: Menlo, Consolas, 'Courier New', monospace;
   font-size: 13px;
   line-height: 19px;
   white-space: pre;
 }
 
+/*
+ * 行番号の欄。本文と一緒に拡大されるため、幅を固定（px）にすると拡大率が
+ * 大きいほど左に大きな空きができる。行番号の桁数（2桁）に合わせて文字単位にする
+ */
 .code-line-number {
   display: inline-block;
-  width: 56px;
-  padding-right: 20px;
+  /* 全体が border-box なので、幅は余白込み（左 1ch + 2桁 + 右 1.5ch） */
+  width: 4.5ch;
+  padding: 0 1.5ch 0 1ch;
   text-align: right;
   color: #858585;
 }
@@ -738,80 +677,9 @@ button.danger:hover {
 .tok-comment { color: #6a9955; }
 .tok-constant { color: #4fc1ff; }
 
-.code-statusbar,
-.doc-statusbar {
-  display: flex;
-  justify-content: space-between;
-  padding: 3px 12px;
-  font-size: 12px;
-}
-
-.code-statusbar {
-  background: #007acc;
-  color: #fff;
-}
-
 .scene-document {
   background: #f3f3f3;
   color: #222;
-}
-
-.doc-titlebar {
-  background: #185abd;
-  color: #fff;
-  text-align: center;
-  padding: 7px;
-  font-size: 12px;
-}
-
-.doc-ribbon-tabs {
-  display: flex;
-  gap: 18px;
-  padding: 6px 14px 0;
-  background: #fff;
-}
-
-.doc-ribbon-tabs span {
-  padding: 4px 2px;
-}
-
-.doc-ribbon-tabs .active {
-  color: #185abd;
-  border-bottom: 3px solid #185abd;
-  font-weight: bold;
-}
-
-.doc-ribbon {
-  display: flex;
-  gap: 4px;
-  padding: 6px 10px;
-  background: #fff;
-  border-bottom: 1px solid #d6d6d6;
-}
-
-.doc-ribbon-group {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 0 12px;
-  border-right: 1px solid #e1e1e1;
-}
-
-.doc-ribbon-items {
-  display: flex;
-  gap: 6px;
-}
-
-.doc-ribbon-items span {
-  padding: 4px 6px;
-  border: 1px solid #e1e1e1;
-  border-radius: 3px;
-}
-
-.doc-ribbon-label {
-  margin-top: 4px;
-  color: #666;
-  font-size: 11px;
 }
 
 .doc-canvas {
@@ -870,8 +738,3 @@ button.danger:hover {
   background: #f2f2f2;
 }
 
-.doc-statusbar {
-  background: #f3f3f3;
-  color: #444;
-  border-top: 1px solid #d6d6d6;
-}
